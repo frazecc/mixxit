@@ -1,48 +1,1031 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-
-  <title>La Partita della Penombra</title>
-
-  <link rel="stylesheet" href="assets/css/app.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Partita della Penombra</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .game-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            color: #ffd700;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .phase-indicator {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+        
+        .phase-name {
+            color: #ffd700;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 12px;
+        }
+        
+        .cell {
+            aspect-ratio: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .cell:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 215, 0, 0.5);
+        }
+        
+        .cell-label {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            font-size: 0.7em;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .card {
+            width: 80%;
+            height: 80%;
+            background: linear-gradient(145deg, #2d2d44 0%, #1a1a2e 100%);
+            border: 2px solid #ffd700;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 5px;
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .card:hover {
+            transform: scale(1.05);
+        }
+        
+        .card.tired {
+            opacity: 0.6;
+            filter: grayscale(0.5);
+        }
+        
+        .card-name {
+            color: #ffd700;
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        
+        .card-stats {
+            display: flex;
+            gap: 10px;
+            font-size: 0.9em;
+        }
+        
+        .stat {
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .stat-forza {
+            color: #ff6b6b;
+        }
+        
+        .stat-resistenza {
+            color: #4ecdc4;
+        }
+        
+        .player-info {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .player-stats {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .stat-box {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #ffd700;
+        }
+        
+        .stat-label {
+            font-size: 0.8em;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .hand {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .hand-card {
+            min-width: 120px;
+            background: linear-gradient(145deg, #2d2d44 0%, #1a1a2e 100%);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .hand-card:hover {
+            border-color: #ffd700;
+            transform: translateY(-5px);
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            padding: 12px 24px;
+            background: linear-gradient(145deg, #ffd700 0%, #ff8c00 100%);
+            border: none;
+            border-radius: 6px;
+            color: #1a1a2e;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        button:hover {
+            transform: scale(1.05);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .log {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-left: 3px solid #ffd700;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: linear-gradient(145deg, #2d2d44 0%, #1a1a2e 100%);
+            padding: 30px;
+            border-radius: 12px;
+            border: 2px solid #ffd700;
+            max-width: 500px;
+            text-align: center;
+        }
+        
+        .modal-title {
+            color: #ffd700;
+            font-size: 1.5em;
+            margin-bottom: 15px;
+        }
+        
+        .modal-text {
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .highlight {
+            animation: highlight 2s ease;
+        }
+        
+        @keyframes highlight {
+            0%, 100% { background: rgba(255, 255, 255, 0.05); }
+            50% { background: rgba(255, 215, 0, 0.2); }
+        }
+    </style>
 </head>
-
 <body>
-  <header class="site-header">
-    <div>
-      <h1 class="site-title">⚔️ La Partita della Penombra</h1>
-
-      <div class="site-subtitle">
-        Motore PvE in arrivo
-      </div>
+    <div class="game-container">
+        <div class="header">
+            <h1>🌙 La Partita della Penombra</h1>
+            <div class="phase-indicator">
+                Fase: <span class="phase-name" id="phaseName">Inizio</span>
+            </div>
+        </div>
+        
+        <!-- IA Info -->
+        <div class="player-info">
+            <div>
+                <strong>IA</strong>
+            </div>
+            <div class="player-stats">
+                <div class="stat-box">
+                    <div class="stat-value" id="iaHP">20</div>
+                    <div class="stat-label">PV</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="iaDeck">20</div>
+                    <div class="stat-label">Mazzo</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="iaHand">0</div>
+                    <div class="stat-label">Mano</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Board -->
+        <div class="board" id="board">
+            <!-- Cells will be generated by JavaScript -->
+        </div>
+        
+        <!-- Player Info -->
+        <div class="player-info">
+            <div>
+                <strong>Giocatore</strong>
+            </div>
+            <div class="player-stats">
+                <div class="stat-box">
+                    <div class="stat-value" id="playerHP">20</div>
+                    <                    <div class="stat-label">PV</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="playerMana">1</div>
+                    <div class="stat-label">Mana</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="playerDeck">20</div>
+                    <div class="stat-label">Mazzo</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="playerHand">0</div>
+                    <div class="stat-label">Mano</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Hand -->
+        <div class="hand" id="hand">
+            <!-- Cards will be generated by JavaScript -->
+        </div>
+        
+        <!-- Controls -->
+        <div class="controls">
+            <button id="btnAction" onclick="game.action()">Azione</button>
+            <button id="btnCombat" onclick="game.combat()">Combattimento</button>
+            <button id="btnEndTurn" onclick="game.endTurn()">Fine Turno</button>
+        </div>
+        
+        <!-- Log -->
+        <div class="log" id="log"></div>
     </div>
-  </header>
-
-  <main class="page">
-    <section class="panel">
-      <h2>Configurazione partita salvata</h2>
-
-      <pre
-        id="gameSetup"
-        style="white-space:pre-wrap;color:var(--muted)"
-      ></pre>
-
-      <a class="button button--secondary" href="deckbuilder.html">
-        Torna al Deckbuilder
-      </a>
-    </section>
-  </main>
-
-  <script>
-    const raw =
-      localStorage.getItem('penombra_pending_game');
-
-    document.getElementById('gameSetup').textContent =
-      raw
-        ? raw
-        : 'Nessuna configurazione partita trovata.';
-  </script>
+    
+    <!-- Modal -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-title" id="modalTitle">Titolo</div>
+            <div class="modal-text" id="modalText">Testo</div>
+            <div class="modal-buttons" id="modalButtons">
+                <!-- Buttons will be generated by JavaScript -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Game State
+        const game = {
+            turn: 1,
+            phase: 'start',
+            player: {
+                hp: 20,
+                mana: 1,
+                maxMana: 1,
+                deck: [],
+                hand: [],
+                graveyard: []
+            },
+            ia: {
+                hp: 20,
+                deck: [],
+                hand: [],
+                graveyard: []
+            },
+            board: [
+                // IA row (row 0)
+                { owner: null, card: null, row: 0, col: 0 },
+                { owner: null, card: null, row: 0, col: 1 },
+                { owner: null, card: null, row: 0, col: 2 },
+                // Center row (row 1)
+                { owner: null, card: null, row: 1, col: 0 },
+                { owner: null, card: null, row: 1, col: 1 },
+                { owner: null, card: null, row: 1, col: 2 },
+                // Player row (row 2)
+                { owner: null, card: null, row: 2, col: 0 },
+                { owner: null, card: null, row: 2, col: 1 },
+                { owner: null, card: null, row: 2, col: 2 }
+            ],
+            selectedCell: null,
+            selectedHandCard: null,
+            
+            // Initialize game
+            init() {
+                this.log('=== Inizio Partita ===');
+                this.createDeck();
+                this.shuffleDeck();
+                this.drawCard('player', 4);
+                this.drawCard('ia', 4);
+                this.updateUI();
+                this.startTurn();
+            },
+            
+            // Create sample deck
+            createDeck() {
+                const cards = [
+                    { name: 'Esploratore', cost: 1, forza: 2, resistenza: 2, etb: null },
+                    { name: 'Guerriero', cost: 2, forza: 3, resistenza: 3, etb: null },
+                    { name: 'Arciere', cost: 2, forza: 3, resistenza: 2, etb: null },
+                    { name: 'Mago', cost: 3, forza: 4, resistenza: 2, etb: 'draw' },
+                    { name: 'Paladino', cost: 4, forza: 4, resistenza: 4, etb: null },
+                    { name: 'Drago', cost: 6, forza: 6, resistenza: 6, etb: null },
+                    { name: 'Cura', cost: 1, type: 'instant', effect: 'heal_unit', amount: 2 },
+                    { name: 'Dardo', cost: 1, type: 'instant', effect: 'damage_unit', amount: 2 },
+                    { name: 'Scudo', cost: 1, type: 'instant', effect: 'buff_unit', forza: 0, resistenza: 3 },
+                    { name: 'Fuoco', cost: 2, type: 'instant', effect: 'damage_player', amount: 3 }
+                ];
+                
+                for (let i = 0; i < 20; i++) {
+                    const card = cards[Math.floor(Math.random() * cards.length)];
+                    this.player.deck.push({ ...card, id: i });
+                    this.ia.deck.push({ ...card, id: i + 100 });
+                }
+            },
+            
+            // Shuffle deck
+            shuffleDeck() {
+                this.shuffleArray(this.player.deck);
+                this.shuffleArray(this.ia.deck);
+            },
+            
+            shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            },
+            
+            // Draw card
+            drawCard(who, count = 1) {
+                for (let i = 0; i < count; i++) {
+                    if (who === 'player') {
+                        if (this.player.deck.length === 0) {
+                            this.log('⚠️ Mazzo vuoto! Preparazione esaurimento: 2 danni');
+                            this.handleExhaustion('player');
+                            return;
+                        }
+                        const card = this.player.deck.pop();
+                        this.player.hand.push(card);
+                        this.log(`📥 Peschi: ${card.name}`);
+                    } else {
+                        if (this.ia.deck.length === 0) {
+                            this.log('⚠️ Mazzo IA vuoto! Preparazione esaurimento: 2 danni');
+                            this.handleExhaustion('ia');
+                            return;
+                        }
+                        const card = this.ia.deck.pop();
+                        this.ia.hand.push(card);
+                        this.log(`📥 IA pesca: ${card.name}`);
+                    }
+                }
+                this.updateUI();
+            },
+            
+            // Handle exhaustion
+            handleExhaustion(who) {
+                this.showModal('Esaurimento', 'Il mazzo è vuoto! Subisci 2 danni.', [
+                    { text: 'OK', action: () => {
+                        if (who === 'player') {
+                            this.player.hp -= 2;
+                            this.log('💥 Danni da esaurimento: -2 PV');
+                        } else {
+                            this.ia.hp -= 2;
+                            this.log('💥 Danni da esaurimento IA: -2 PV');
+                        }
+                        this.updateUI();
+                        this.checkWinCondition();
+                        this.hideModal();
+                    }}
+                ]);
+            },
+            
+            // Start turn
+            startTurn() {
+                this.phase = 'mana';
+                this.player.maxMana = Math.min(10, this.turn);
+                this.player.mana = this.player.maxMana;
+                this.log(`=== Turno ${this.turn} ===`);
+                this.log(`💎 Mana: ${this.player.mana}`);
+                
+                // Ready all player creatures
+                this.board.forEach(cell => {
+                    if (cell.owner === 'player' && cell.card) {
+                        cell.card.tired = false;
+                    }
+                });
+                
+                this.updateUI();
+                this.phase = 'manipulation';
+                this.log('🌙 Fase: Manomissione');
+                this.handleManipulation();
+            },
+            
+            // Handle manipulation phase
+            handleManipulation() {
+                // Check for start-of-turn effects
+                const effects = [];
+                this.board.forEach((cell, index) => {
+                    if (cell.card && cell.card.etb === 'start') {
+                        effects.push({ cell: index, effect: cell.card.etb });
+                    }
+                });
+                
+                if (effects.length > 0) {
+                    this.resolveEffects(effects);
+                } else {
+                    this.phase = 'draw';
+                    this.log('📥 Fase: Pesca');
+                    this.drawCard('player', 1);
+                    this.phase = 'main';
+                    this.log('⚔️ Fase: Principale');
+                    this.updateUI();
+                }
+            },
+            
+            // Resolve effects
+            resolveEffects(effects) {
+                if (effects.length === 0) {
+                    this.phase = 'draw';
+                    this.log('📥 Fase: Pesca');
+                    this.drawCard('player', 1);
+                    this.phase = 'main';
+                    this.log('⚔️ Fase: Principale');
+                    this.updateUI();
+                    return;
+                }
+                
+                const effect = effects.shift();
+                this.showModal('Effetto in attesa', `Effetto: ${effect.effect}`, [
+                    { text: 'Rispondi', action: () => {
+                        this.log('⚡ Finestra di interferenza...');
+                        // Player can respond with instant
+                        this.hideModal();
+                        this.resolveEffects(effects);
+                    }},
+                    { text: 'Passa', action: () => {
+                        this.log('✅ Effetto risolto');
+                        this.hideModal();
+                        this.resolveEffects(effects);
+                    }}
+                ]);
+            },
+            
+            // Action (play card, move, etc.)
+            action() {
+                if (this.phase !== 'main') {
+                    this.log('❌ Puoi agire solo nella fase principale');
+                    return;
+                }
+                
+                if (this.selectedHandCard !== null) {
+                    // Play card from hand
+                    this.playCard(this.selectedHandCard);
+                } else if (this.selectedCell !== null) {
+                    // Move creature
+                    this.moveCreature(this.selectedCell);
+                } else {
+                    this.log('👆 Seleziona una carta o una creatura');
+                }
+            },
+            
+            // Play card
+            playCard(handIndex) {
+                const card = this.player.hand[handIndex];
+                
+                if (card.type === 'instant') {
+                    this.log(`⚡ Giochi istantaneo: ${card.name}`);
+                    this.resolveInstant(card);
+                    this.player.hand.splice(handIndex, 1);
+                    this.player.graveyard.push(card);
+                    this.selectedHandCard = null;
+                    this.updateUI();
+                    return;
+                }
+                
+                // Monster card
+                if (card.cost > this.player.mana) {
+                    this.log('❌ Mana insufficiente');
+                    return;
+                }
+                
+                // Find empty cell in player row
+                const emptyCells = this.board.filter((cell, index) => 
+                    index >= 6 && index <= 8 && cell.card === null
+                );
+                
+                if (emptyCells.length === 0) {
+                    this.log('❌ Nessuna casella libera');
+                    return;
+                }
+                
+                const targetCell = emptyCells[0];
+                const cellIndex = this.board.indexOf(targetCell);
+                
+                this.player.mana -= card.cost;
+                this.player.hand.splice(handIndex, 1);
+                
+                targetCell.card = { ...card, tired: true, maxResistenza: card.resistenza };
+                targetCell.owner = 'player';
+                
+                this.log(`🎴 Giochi: ${card.name} (${card.cost} mana)`);
+                
+                // ETB effect
+                if (card.etb) {
+                    this.log(`⚡ Effetto ETB: ${card.etb}`);
+                    this.resolveETB(card.etb, targetCell);
+                }
+                
+                this.selectedHandCard = null;
+                this.updateUI();
+            },
+            
+            // Resolve instant
+            resolveInstant(card) {
+                switch (card.effect) {
+                    case 'heal_unit':
+                        this.log(`💚 Cura ${card.amount} RESISTENZA a un mostro`);
+                        // TODO: Select target
+                        break;
+                    case 'heal_player':
+                        this.player.hp += card.amount;
+                        this.log(`💚 Cura ${card.amount} PV`);
+                        break;
+                    case 'damage_unit':
+                        this.log(`💥 ${card.amount} danni a un mostro`);
+                        // TODO: Select target
+                        break;
+                    case 'damage_player':
+                        this.ia.hp -= card.amount;
+                        this.log(`💥 ${card.amount} danni all'IA`);
+                        break;
+                    case 'buff_unit':
+                        this.log(`🛡️ +${card.resistenza} RESISTENZA a un mostro`);
+                        // TODO: Select target
+                        break;
+                }
+                this.updateUI();
+                this.checkWinCondition();
+            },
+            
+            // Resolve ETB
+            resolveETB(effect, cell) {
+                this.showModal('Effetto ETB', `Effetto: ${effect}`, [
+                    { text: 'Rispondi', action: () => {
+                        this.log('⚡ Finestra di interferenza...');
+                        this.hideModal();
+                        // Resolve effect
+                        if (effect === 'draw') {
+                            this.drawCard('player', 1);
+                        }
+                    }},
+                    { text: 'Passa', action: () => {
+                        this.log('✅ Effetto risolto');
+                        this.hideModal();
+                        // Resolve effect
+                        if (effect === 'draw') {
+                            this.drawCard('player', 1);
+                        }
+                    }}
+                ]);
+            },
+            
+            // Move creature
+            moveCreature(cellIndex) {
+                const cell = this.board[cellIndex];
+                if (!cell.card || cell.owner !== 'player') {
+                    this.log('❌ Seleziona una tua creatura');
+                    return;
+                }
+                
+                if (this.player.mana < 1) {
+                    this.log('❌ Mana insufficiente (serve 1 mana)');
+                    return;
+                }
+                
+                // Show possible moves
+                const moves = this.getPossibleMoves(cellIndex);
+                if (moves.length === 0) {
+                    this.log('❌ Nessun movimento possibile');
+                    return;
+                }
+                
+                this.log(`🚶 Movimento: ${moves.length} caselle disponibili`);
+                // TODO: Show move options
+                this.player.mana -= 1;
+                this.updateUI();
+            },
+            
+            // Get possible moves
+            getPossibleMoves(cellIndex) {
+                const cell = this.board[cellIndex];
+                const moves = [];
+                const row = cell.row;
+                const col = cell.col;
+                
+                // Up (towards IA)
+                if (row > 0) {
+                    const target = this.board[cellIndex - 3];
+                    if (target.card === null && target.row >= 1) {
+                        moves.push(cellIndex - 3);
+                    }
+                }
+                
+                // Down (towards player) - not allowed
+                // Left
+                if (col > 0) {
+                    const target = this.board[cellIndex - 1];
+                    if (target.card === null) {
+                        moves.push(cellIndex - 1);
+                    }
+                }
+                
+                // Right
+                if (col < 2) {
+                    const target = this.board[cellIndex + 1];
+                    if (target.card === null) {
+                        moves.push(cellIndex + 1);
+                    }
+                }
+                
+                return moves;
+            },
+            
+            // Combat
+            combat() {
+                if (this.phase !== 'main') {
+                    this.log('❌ Puoi combattere solo nella fase principale');
+                    return;
+                }
+                
+                if (this.selectedCell === null) {
+                    this.log('👆 Seleziona una creatura per attaccare');
+                    return;
+                }
+                
+                const cell = this.board[this.selectedCell];
+                if (!cell.card || cell.owner !== 'player' || cell.card.tired) {
+                    this.log('❌ Seleziona una tua creatura pronta');
+                    return;
+                }
+                
+                // Find target
+                const target = this.findAttackTarget(this.selectedCell);
+                if (target === null) {
+                    this.log('❌ Nessun bersaglio valido');
+                    return;
+                }
+                
+                this.log(`⚔️ ${cell.card.name} attacca!`);
+                
+                if (target.type === 'creature') {
+                    const targetCell = this.board[target.index];
+                    this.log(`🎯 Bersaglio: ${targetCell.card.name}`);
+                    
+                    // Defender window
+                    this.showModal('Finestra di Interferenza', 'Il difensore può giocare un istantaneo', [
+                        { text: 'Rispondi', action: () => {
+                            this.log('⚡ Difensore gioca istantaneo...');
+                            this.hideModal();
+                            this.resolveCombat(cell, targetCell);
+                        }},
+                        { text: 'Passa', action: () => {
+                            this.log('✅ Difensore passa');
+                            this.hideModal();
+                            this.resolveCombat(cell, targetCell);
+                        }}
+                    ]);
+                } else if (target.type === 'direct') {
+                    this.log('🎯 Attacco diretto!');
+                    
+                    // Defender window
+                    this.showModal('Finestra di Interferenza', 'Il difensore può giocare un istantaneo', [
+                        { text: 'Rispondi', action: () => {
+                            this.log('⚡ Difensore gioca istantaneo...');
+                            this.hideModal();
+                            this.resolveDirectAttack(cell);
+                        }},
+                        { text: 'Passa', action: () => {
+                            this.log('✅ Difensore passa');
+                            this.hideModal();
+                            this.resolveDirectAttack(cell);
+                        }}
+                    ]);
+                }
+            },
+            
+            // Find attack target
+            findAttackTarget(cellIndex) {
+                const cell = this.board[cellIndex];
+                const col = cell.col;
+                
+                // Check column for enemies
+                for (let row = cell.row - 1; row >= 0; row--) {
+                    const index = row * 3 + col;
+                    const target = this.board[index];
+                    
+                    if (target.card) {
+                        if (target.owner === 'ia') {
+                            return { type: 'creature', index: index };
+                        } else {
+                            // Blocked by ally
+                            return null;
+                        }
+                    }
+                }
+                
+                // Direct attack if in center row and column is clear
+                if (cell.row === 1) {
+                    return { type: 'direct' };
+                }
+                
+                return null;
+            },
+            
+            // Resolve combat
+            resolveCombat(attackerCell, defenderCell) {
+                const attacker = attackerCell.card;
+                const defender = defenderCell.card;
+                
+                this.log(`💥 ${attacker.name} (${attacker.forza}/${attacker.resistenza}) vs ${defender.name} (${defender.forza}/${defender.resistenza})`);
+                
+                defender.resistenza -= attacker.forza;
+                attacker.tired = true;
+                
+                this.log(`🛡️ ${defender.name} ha ${defender.resistenza} RESISTENZA`);
+                
+                if (defender.resistenza <= 0) {
+                    this.log(`💀 ${defender.name} distrutto`);
+                    defenderCell.card = null;
+                    defenderCell.owner = null;
+                }
+                
+                this.selectedCell = null;
+                this.updateUI();
+            },
+            
+            // Resolve direct attack
+            resolveDirectAttack(attackerCell) {
+                const attacker = attackerCell.card;
+                
+                this.log(`💥 Attacco diretto: ${attacker.forza} danni`);
+                this.ia.hp -= attacker.forza;
+                attacker.tired = true;
+                
+                this.selectedCell = null;
+                this.updateUI();
+                this.checkWinCondition();
+            },
+            
+            // End turn
+            endTurn() {
+                if (this.phase !== 'main') {
+                    this.log('❌ Puoi finire il turno solo nella fase principale');
+                    return;
+                }
+                
+                this.log('🌙 Fine turno');
+                
+                // Discard if hand > 7
+                while (this.player.hand.length > 7) {
+                    const card = this.player.hand.pop();
+                    this.player.graveyard.push(card);
+                    this.log(`🗑️ Scarto casuale: ${card.name}`);
+                }
+                
+                this.turn++;
+                this.startTurn();
+            },
+            
+            // Check win condition
+            checkWinCondition() {
+                if (this.ia.hp <= 0) {
+                    this.showModal('Vittoria!', 'Hai sconfitto l\'IA!', [
+                        { text: 'Nuova Partita', action: () => location.reload() }
+                    ]);
+                } else if (this.player.hp <= 0) {
+                    this.showModal('Sconfitta', 'Sei stato sconfitto!', [
+                        { text: 'Nuova Partita', action: () => location.reload() }
+                    ]);
+                }
+            },
+            
+            // Update UI
+            updateUI() {
+                document.getElementById('phaseName').textContent = this.phase;
+                document.getElementById('playerHP').textContent = this.player.hp;
+                document.getElementById('playerMana').textContent = this.player.mana;
+                document.getElementById('playerDeck').textContent = this.player.deck.length;
+                document.getElementById('playerHand').textContent = this.player.hand.length;
+                document.getElementById('iaHP').textContent = this.ia.hp;
+                document.getElementById('iaDeck').textContent = this.ia.deck.length;
+                document.getElementById('iaHand').textContent = this.ia.hand.length;
+                
+                // Render board
+                const boardEl = document.getElementById('board');
+                boardEl.innerHTML = '';
+                this.board.forEach((cell, index) => {
+                    const cellEl = document.createElement('div');
+                    cellEl.className = 'cell';
+                    if (this.selectedCell === index) cellEl.classList.add('highlight');
+                    
+                    const label = document.createElement('div');
+                    label.className = 'cell-label';
+                    label.textContent = `R${cell.row}C${cell.col}`;
+                    cellEl.appendChild(label);
+                    
+                    if (cell.card) {
+                        const cardEl = document.createElement('div');
+                        cardEl.className = 'card';
+                        if (cell.card.tired) cardEl.classList.add('tired');
+                        
+                        const nameEl = document.createElement('div');
+                        nameEl.className = 'card-name';
+                        nameEl.textContent = cell.card.name;
+                        cardEl.appendChild(nameEl);
+                        
+                        const statsEl = document.createElement('div');
+                        statsEl.className = 'card-stats';
+                        statsEl.innerHTML = `
+                            <span class="stat stat-forza">⚔️${cell.card.forza}</span>
+                            <span class="stat stat-resistenza">🛡️${cell.card.resistenza}</span>
+                        `;
+                        cardEl.appendChild(statsEl);
+                        
+                        cellEl.appendChild(cardEl);
+                        cellEl.onclick = () => this.selectCell(index);
+                    }
+                    
+                    boardEl.appendChild(cellEl);
+                });
+                
+                // Render hand
+                const handEl = document.getElementById('hand');
+                handEl.innerHTML = '';
+                this.player.hand.forEach((card, index) => {
+                    const cardEl = document.createElement('div');
+                    cardEl.className = 'hand-card';
+                    if (this.selectedHandCard === index) cardEl.classList.add('highlight');
+                    
+                    cardEl.innerHTML = `
+                        <div class="card-name">${card.name}</div>
+                        <div>Costo: ${card.cost}</div>
+                        ${card.forza ? `<div>⚔️${card.forza} 🛡️${card.resistenza}</div>` : ''}
+                        ${card.type === 'instant' ? `<div>⚡ Istantaneo</div>` : ''}
+                    `;
+                    
+                    cardEl.onclick = () => this.selectHandCard(index);
+                    handEl.appendChild(cardEl);
+                });
+            },
+            
+            // Select cell
+            selectCell(index) {
+                this.selectedCell = index;
+                this.selectedHandCard = null;
+                this.updateUI();
+                this.log(`👆 Selezionato: R${this.board[index].row}C${this.board[index].col}`);
+            },
+            
+            // Select hand card
+            selectHandCard(index) {
+                this.selectedHandCard = index;
+                this.selectedCell = null;
+                this.updateUI();
+                this.log(`👆 Selezionato: ${this.player.hand[index].name}`);
+            },
+            
+            // Log
+            log(message) {
+                const logEl = document.getElementById('log');
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+                entry.textContent = message;
+                logEl.appendChild(entry);
+                logEl.scrollTop = logEl.scrollHeight;
+            },
+            
+            // Modal
+            showModal(title, text, buttons) {
+                document.getElementById('modalTitle').textContent = title;
+                document.getElementById('modalText').textContent = text;
+                
+                const buttonsEl = document.getElementById('modalButtons');
+                buttonsEl.innerHTML = '';
+                buttons.forEach(btn => {
+                    const buttonEl = document.createElement('button');
+                    buttonEl.textContent = btn.text;
+                    buttonEl.onclick = btn.action;
+                    buttonsEl.appendChild(buttonEl);
+                });
+                
+                document.getElementById('modal').style.display = 'flex';
+            },
+            
+            hideModal() {
+                document.getElementById('modal').style.display = 'none';
+            }
+        };
+        
+        // Start game
+        game.init();
+    </script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-/* Yu-Gi-Oh!-style rectangular card preview and interaction helper. */
+/* Card preview modal for Mixxit. Uses #modal from game.html. */
 (function () {
   'use strict';
 
@@ -12,6 +12,15 @@
 
   function label(card) {
     return LABELS[card?.type] || card?.type || 'Carta';
+  }
+
+  function close() {
+    const modal = document.getElementById('modal');
+    const standard = document.getElementById('standardDialog');
+    const preview = document.getElementById('cardDialog');
+    if (modal) modal.classList.remove('open');
+    if (standard) standard.hidden = false;
+    if (preview) preview.hidden = true;
   }
 
   function open(card, onConfirm, options = {}) {
@@ -33,15 +42,14 @@
     document.getElementById('cardPreviewRules').textContent = card.rulesText || card.rules_text || 'Nessun effetto.';
 
     const art = document.getElementById('cardPreviewArt');
-    art.innerHTML = '';
+    art.textContent = '✦';
     const image = card.imageUrl || card.image_path || card.imagePath || '';
     if (image) {
       const img = document.createElement('img');
       img.src = image;
       img.alt = card.name || 'Illustrazione carta';
+      art.textContent = '';
       art.appendChild(img);
-    } else {
-      art.textContent = '✦';
     }
 
     const confirm = document.getElementById('cardPreviewConfirm');
@@ -51,18 +59,9 @@
       close();
       if (typeof onConfirm === 'function') onConfirm(card);
     };
+
     document.getElementById('cardPreviewCancel').onclick = close;
     modal.classList.add('open');
-  }
-
-  function close() {
-    const modal = document.getElementById('modal');
-    if (!modal) return;
-    modal.classList.remove('open');
-    const standard = document.getElementById('standardDialog');
-    const preview = document.getElementById('cardDialog');
-    if (standard) standard.hidden = false;
-    if (preview) preview.hidden = true;
   }
 
   window.MixxitCardPreview = { open, close, label };

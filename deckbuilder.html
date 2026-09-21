@@ -1,0 +1,1524 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <title>Deckbuilder — La Partita della Penombra</title>
+
+  <link rel="stylesheet" href="assets/css/app.css">
+
+  <style>
+    .deck-page-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(300px, 0.8fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .deck-toolbar {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) 150px;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .deck-toolbar input,
+    .deck-toolbar select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--text);
+      background: #07111f;
+    }
+
+    .deck-pools {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+      gap: 12px;
+    }
+
+    .pool-card {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #0a1727;
+    }
+
+    .pool-card__actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 5px;
+      padding: 7px;
+      border-top: 1px solid var(--line);
+    }
+
+    .pool-card__actions button {
+      padding: 7px 4px;
+      border: 0;
+      border-radius: 8px;
+      color: #fff;
+      background: #334155;
+      cursor: pointer;
+      font-size: 11px;
+    }
+
+    .pool-card__actions button:hover {
+      filter: brightness(1.15);
+    }
+
+    .deck-sidebar {
+      position: sticky;
+      top: 88px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .deck-zone {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #091524;
+    }
+
+    .deck-zone h3 {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 0 0 8px;
+      font-size: 14px;
+    }
+
+    .deck-zone__list {
+      display: grid;
+      gap: 6px;
+      max-height: 240px;
+      overflow: auto;
+    }
+
+    .deck-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 7px;
+      align-items: center;
+      padding: 7px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #102037;
+      font-size: 12px;
+    }
+
+    .deck-row__name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .deck-row button {
+      border: 0;
+      border-radius: 6px;
+      padding: 4px 7px;
+      color: #fff;
+      background: #495b74;
+      cursor: pointer;
+    }
+
+    .deck-row button:last-child {
+      background: #9f2727;
+    }
+
+    .deck-validation {
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .deck-validation--ok {
+      color: #b9f7cd;
+      border: 1px solid #267849;
+      background: #0c2b1c;
+    }
+
+    .deck-validation--bad {
+      color: #ffc3c3;
+      border: 1px solid #8d3030;
+      background: #331619;
+    }
+
+    .signature-card {
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .signature-card .penumombra-card {
+      width: 110px;
+    }
+
+    .side-phase {
+      margin-top: 16px;
+    }
+
+    .side-swap-row {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 8px;
+      align-items: center;
+      padding: 8px;
+      margin-bottom: 7px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: #091524;
+      font-size: 12px;
+    }
+
+    .side-swap-row select {
+      width: 100%;
+      padding: 7px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      color: var(--text);
+      background: #102037;
+    }
+
+    .side-swap-row button {
+      border: 0;
+      border-radius: 7px;
+      padding: 7px;
+      color: white;
+      background: #a32b2b;
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 1000px) {
+      .deck-page-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .deck-sidebar {
+        position: static;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .deck-toolbar {
+        grid-template-columns: 1fr;
+      }
+
+      .signature-card {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="site-header">
+    <div>
+      <h1 class="site-title">🃏 Deckbuilder</h1>
+
+      <div class="site-subtitle">
+        La Partita della Penombra · Costruisci il tuo mazzo prima dello scontro
+      </div>
+    </div>
+
+    <nav class="site-nav">
+      <a class="nav-link button--secondary" href="index.html">
+        Gioco
+      </a>
+
+      <a class="nav-link button--secondary" href="replay.html">
+        Replay
+      </a>
+
+      <a class="nav-link button--secondary" href="admin.html">
+        Admin
+      </a>
+
+      <button id="logoutButton" class="button button--secondary">
+        Esci
+      </button>
+    </nav>
+  </header>
+
+  <main class="page">
+    <section id="loadingPanel" class="panel">
+      <p class="muted">Caricamento Deckbuilder…</p>
+    </section>
+
+    <section id="notLoggedPanel" class="panel" hidden>
+      <h2>Accesso necessario</h2>
+
+      <p class="muted">
+        Devi entrare con un utente creato dall’Admin prima di costruire un mazzo.
+      </p>
+
+      <a class="button" href="index.html">
+        Vai al login
+      </a>
+    </section>
+
+    <section id="deckbuilderPanel" hidden>
+      <section class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <div>
+            <h2 id="deckTitle" style="margin-bottom:5px">
+              Il mio mazzo
+            </h2>
+
+            <p class="muted" style="margin:0">
+              Mazzo principale: esattamente 30 carte · massimo 3 copie per carta · Extra Deck: max 5 · Side Deck: max 8.
+            </p>
+          </div>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button id="saveDeckButton" class="button button--secondary">
+              Salva mazzo
+            </button>
+
+            <button id="prepareGameButton" class="button button--green">
+              Prepara partita
+            </button>
+          </div>
+        </div>
+
+        <div id="deckMessage" class="muted" style="margin-top:10px"></div>
+      </section>
+
+      <section class="deck-page-grid" style="margin-top:16px">
+        <section class="panel">
+          <h2>Catalogo attivo</h2>
+
+          <div class="deck-toolbar">
+            <input
+              id="searchCards"
+              type="search"
+              placeholder="Cerca una carta…"
+            >
+
+            <select id="typeFilter">
+              <option value="all">Tutti i tipi</option>
+              <option value="monster">Mostri</option>
+              <option value="sorcery">Stregonerie</option>
+              <option value="instant">Istantanei</option>
+              <option value="extra">Extra Deck</option>
+            </select>
+          </div>
+
+          <div id="cardsPool" class="deck-pools"></div>
+        </section>
+
+        <aside class="deck-sidebar">
+          <section class="panel">
+            <div id="deckValidation"></div>
+          </section>
+
+          <section class="deck-zone">
+            <h3>
+              <span>Mazzo principale</span>
+              <span id="mainCount">0 / 30</span>
+            </h3>
+
+            <div id="mainDeckList" class="deck-zone__list"></div>
+          </section>
+
+          <section class="deck-zone">
+            <h3>
+              <span>Extra Deck</span>
+              <span id="extraCount">0 / 5</span>
+            </h3>
+
+            <div id="extraDeckList" class="deck-zone__list"></div>
+          </section>
+
+          <section class="deck-zone">
+            <h3>
+              <span>Side Deck</span>
+              <span id="sideCount">0 / 8</span>
+            </h3>
+
+            <div id="sideDeckList" class="deck-zone__list"></div>
+          </section>
+        </aside>
+      </section>
+
+      <section id="preGamePanel" class="panel hidden" style="margin-top:16px">
+        <h2>Preparazione allo scontro</h2>
+
+        <p class="muted">
+          Lo Stratega della Bruma rivela una delle carte più minacciose del proprio mazzo.
+          Puoi effettuare fino a tre sostituzioni tra Mazzo principale e Side Deck.
+        </p>
+
+        <div id="signatureCardArea"></div>
+
+        <div class="side-phase">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+            <h3 style="margin:0">
+              Side Deck — sostituzioni: <span id="swapCount">0 / 3</span>
+            </h3>
+
+            <button id="addSwapButton" class="button button--secondary">
+              + Aggiungi sostituzione
+            </button>
+          </div>
+
+          <div id="swapList" style="margin-top:12px"></div>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
+          <button id="confirmSideButton" class="button button--green">
+            Conferma e inizia partita
+          </button>
+
+          <button id="cancelPrepareButton" class="button button--secondary">
+            Torna al Deckbuilder
+          </button>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/supabase-client.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/card-renderer.js"></script>
+
+  <script>
+    const DECK_RULES = {
+      mainMin: 30,
+      mainMax: 30,
+      extraMax: 5,
+      sideMax: 8,
+      copyMax: 3,
+      maxSwaps: 3
+    };
+
+    let profile = null;
+    let allCards = [];
+    let currentDeckId = null;
+
+    let deckState = {
+      main: {},
+      extra: {},
+      side: {}
+    };
+
+    let pendingSwaps = [];
+
+    function showDeckMessage(message, isError = false) {
+      const element = document.getElementById('deckMessage');
+
+      element.textContent = message;
+      element.style.color = isError
+        ? 'var(--danger)'
+        : 'var(--muted)';
+    }
+
+    function quantity(zone, cardId) {
+      return deckState[zone][cardId] || 0;
+    }
+
+    function zoneTotal(zone) {
+      return Object.values(deckState[zone])
+        .reduce((sum, value) => sum + value, 0);
+    }
+
+    function getCard(cardId) {
+      return allCards.find((card) => card.id === cardId);
+    }
+
+    function getZoneForCard(card) {
+      return card.card_type === 'extra'
+        ? 'extra'
+        : 'main';
+    }
+
+    function addCard(cardId, requestedZone) {
+      const card = getCard(cardId);
+
+      if (!card) {
+        return;
+      }
+
+      const zone = requestedZone || getZoneForCard(card);
+
+      const currentQuantity = quantity(zone, cardId);
+
+      if (currentQuantity >= DECK_RULES.copyMax) {
+        showDeckMessage(
+          `Puoi usare massimo ${DECK_RULES.copyMax} copie di ${card.name}.`,
+          true
+        );
+
+        return;
+      }
+
+      if (
+        zone === 'main' &&
+        zoneTotal('main') >= DECK_RULES.mainMax
+      ) {
+        showDeckMessage(
+          `Il mazzo principale può contenere massimo ${DECK_RULES.mainMax} carte.`,
+          true
+        );
+
+        return;
+      }
+
+      if (
+        zone === 'extra' &&
+        zoneTotal('extra') >= DECK_RULES.extraMax
+      ) {
+        showDeckMessage(
+          `L’Extra Deck può contenere massimo ${DECK_RULES.extraMax} carte.`,
+          true
+        );
+
+        return;
+      }
+
+      if (
+        zone === 'side' &&
+        zoneTotal('side') >= DECK_RULES.sideMax
+      ) {
+        showDeckMessage(
+          `Il Side Deck può contenere massimo ${DECK_RULES.sideMax} carte.`,
+          true
+        );
+
+        return;
+      }
+
+      deckState[zone][cardId] = currentQuantity + 1;
+
+      showDeckMessage('');
+      renderDeckbuilder();
+    }
+
+    function removeCard(cardId, zone) {
+      const current = quantity(zone, cardId);
+
+      if (current <= 1) {
+        delete deckState[zone][cardId];
+      } else {
+        deckState[zone][cardId] = current - 1;
+      }
+
+      renderDeckbuilder();
+    }
+
+    function validateDeck() {
+      const main = zoneTotal('main');
+      const extra = zoneTotal('extra');
+      const side = zoneTotal('side');
+
+      const messages = [];
+
+      if (main !== DECK_RULES.mainMin) {
+        messages.push(
+          `Il Mazzo principale deve avere esattamente ${DECK_RULES.mainMin} carte: ora ne ha ${main}.`
+        );
+      }
+
+      if (extra > DECK_RULES.extraMax) {
+        messages.push(
+          `L’Extra Deck supera il limite di ${DECK_RULES.extraMax}.`
+        );
+      }
+
+      if (side > DECK_RULES.sideMax) {
+        messages.push(
+          `Il Side Deck supera il limite di ${DECK_RULES.sideMax}.`
+        );
+      }
+
+      const valid = messages.length === 0;
+
+      return {
+        valid,
+        messages,
+        main,
+        extra,
+        side
+      };
+    }
+
+    function renderValidation() {
+      const validation = validateDeck();
+      const element = document.getElementById('deckValidation');
+
+      if (validation.valid) {
+        element.className =
+          'deck-validation deck-validation--ok';
+
+        element.innerHTML = `
+          <strong>✅ Mazzo valido</strong><br>
+          Mazzo principale: ${validation.main}/30<br>
+          Extra Deck: ${validation.extra}/5<br>
+          Side Deck: ${validation.side}/8
+        `;
+      } else {
+        element.className =
+          'deck-validation deck-validation--bad';
+
+        element.innerHTML = `
+          <strong>⚠️ Mazzo non valido</strong><br>
+          ${validation.messages.join('<br>')}<br><br>
+          Extra Deck: ${validation.extra}/5<br>
+          Side Deck: ${validation.side}/8
+        `;
+      }
+
+      return validation;
+    }
+
+    function renderDeckZone(zone, containerId, countId, label) {
+      const container =
+        document.getElementById(containerId);
+
+      const countElement =
+        document.getElementById(countId);
+
+      const total = zoneTotal(zone);
+
+      const limit =
+        zone === 'main'
+          ? DECK_RULES.mainMax
+          : zone === 'extra'
+            ? DECK_RULES.extraMax
+            : DECK_RULES.sideMax;
+
+      countElement.textContent =
+        `${total} / ${limit}`;
+
+      container.innerHTML = '';
+
+      const entries =
+        Object.entries(deckState[zone]);
+
+      if (!entries.length) {
+        container.innerHTML =
+          `<div class="muted">Nessuna carta nel ${label}.</div>`;
+
+        return;
+      }
+
+      entries
+        .sort(([idA], [idB]) => {
+          const nameA = getCard(idA)?.name || '';
+          const nameB = getCard(idB)?.name || '';
+
+          return nameA.localeCompare(nameB);
+        })
+        .forEach(([cardId, amount]) => {
+          const card = getCard(cardId);
+
+          if (!card) {
+            return;
+          }
+
+          const row = document.createElement('div');
+
+          row.className = 'deck-row';
+
+          row.innerHTML = `
+            <div class="deck-row__name" title="${card.name}">
+              ${amount}× ${card.name}
+            </div>
+
+            <button data-action="add">+</button>
+            <button data-action="remove">−</button>
+          `;
+
+          row
+            .querySelector('[data-action="add"]')
+            .addEventListener('click', () => {
+              addCard(cardId, zone);
+            });
+
+          row
+            .querySelector('[data-action="remove"]')
+            .addEventListener('click', () => {
+              removeCard(cardId, zone);
+            });
+
+          container.appendChild(row);
+        });
+    }
+
+    function renderPool() {
+      const search =
+        document.getElementById('searchCards')
+          .value
+          .trim()
+          .toLowerCase();
+
+      const type =
+        document.getElementById('typeFilter').value;
+
+      const pool =
+        document.getElementById('cardsPool');
+
+      const filtered = allCards.filter((card) => {
+        const matchesSearch =
+          !search ||
+          card.name.toLowerCase().includes(search) ||
+          card.card_code.toLowerCase().includes(search);
+
+        const matchesType =
+          type === 'all' ||
+          card.card_type === type;
+
+        return matchesSearch && matchesType;
+      });
+
+      pool.innerHTML = '';
+
+      filtered.forEach((card) => {
+        const wrapper =
+          document.createElement('article');
+
+        wrapper.className = 'pool-card';
+
+        wrapper.innerHTML =
+          window.PenombraCards.render(
+            card,
+            {
+              imageUrl: card.signed_image_url || '',
+              interactive: false
+            }
+          ) +
+          `
+            <div class="pool-card__actions">
+              <button data-zone="main">
+                ${card.card_type === 'extra' ? 'Main ✕' : '+ Main'}
+              </button>
+
+              <button data-zone="extra">
+                ${card.card_type === 'extra' ? '+ Extra' : 'Extra ✕'}
+              </button>
+
+              <button data-zone="side">
+                + Side
+              </button>
+            </div>
+          `;
+
+        const mainButton =
+          wrapper.querySelector('[data-zone="main"]');
+
+        const extraButton =
+          wrapper.querySelector('[data-zone="extra"]');
+
+        mainButton.disabled =
+          card.card_type === 'extra';
+
+        extraButton.disabled =
+          card.card_type !== 'extra';
+
+        mainButton.addEventListener('click', () => {
+          addCard(card.id, 'main');
+        });
+
+        extraButton.addEventListener('click', () => {
+          addCard(card.id, 'extra');
+        });
+
+        wrapper
+          .querySelector('[data-zone="side"]')
+          .addEventListener('click', () => {
+            addCard(card.id, 'side');
+          });
+
+        pool.appendChild(wrapper);
+      });
+
+      if (!filtered.length) {
+        pool.innerHTML =
+          '<p class="muted">Nessuna carta attiva corrisponde alla ricerca.</p>';
+      }
+    }
+
+    function renderDeckbuilder() {
+      renderPool();
+
+      renderDeckZone(
+        'main',
+        'mainDeckList',
+        'mainCount',
+        'Mazzo principale'
+      );
+
+      renderDeckZone(
+        'extra',
+        'extraDeckList',
+        'extraCount',
+        'Extra Deck'
+      );
+
+      renderDeckZone(
+        'side',
+        'sideDeckList',
+        'sideCount',
+        'Side Deck'
+      );
+
+      renderValidation();
+    }
+
+    async function signedImage(path) {
+      if (!path) {
+        return '';
+      }
+
+      const { data, error } =
+        await window.supabaseClient.storage
+          .from('card-art')
+          .createSignedUrl(path, 60 * 60);
+
+      if (error) {
+        console.warn(error);
+        return '';
+      }
+
+      return data?.signedUrl || '';
+    }
+
+    async function loadActiveCards() {
+      const { data, error } =
+        await window.supabaseClient
+          .from('cards')
+          .select(`
+            id,
+            card_code,
+            current_version:card_versions!cards_current_version_fk (
+              id,
+              version_number,
+              name,
+              card_type,
+              mana_cost,
+              attack,
+              health,
+              sacrifice_requirement,
+              special_requirement,
+              rules_text,
+              effect_code,
+              effect_parameters,
+              timing,
+              tags,
+              rarity,
+              threat_rating,
+              image_path,
+              image_crop,
+              frame_style,
+              engine_supported,
+              ai_supported
+            )
+          `)
+          .eq('status', 'active')
+          .is('deleted_at', null)
+          .order('card_code', {
+            ascending: true
+          });
+
+      if (error) {
+        throw new Error(
+          'Errore caricamento carte: ' + error.message
+        );
+      }
+
+      const cards = [];
+
+      for (const row of data || []) {
+        if (!row.current_version) {
+          continue;
+        }
+
+        const signedImageUrl =
+          await signedImage(
+            row.current_version.image_path
+          );
+
+        cards.push({
+          ...row.current_version,
+          id: row.current_version.id,
+          card_id: row.id,
+          card_code: row.card_code,
+          signed_image_url: signedImageUrl
+        });
+      }
+
+      allCards = cards;
+    }
+
+    function deckRowsFromState() {
+      const rows = [];
+
+      ['main', 'extra', 'side'].forEach((zone) => {
+        Object.entries(deckState[zone])
+          .forEach(([cardId, amount]) => {
+            const card = getCard(cardId);
+
+            if (!card) {
+              return;
+            }
+
+            rows.push({
+              card_version_id: card.id,
+              zone,
+              quantity: amount
+            });
+          });
+      });
+
+      return rows;
+    }
+
+    async function loadMyDeck() {
+      const { data: deck, error: deckError } =
+        await window.supabaseClient
+          .from('decks')
+          .select(`
+            id,
+            name,
+            deck_cards (
+              zone,
+              quantity,
+              card_version_id
+            )
+          `)
+          .eq('owner_id', profile.id)
+          .eq('is_default', true)
+          .maybeSingle();
+
+      if (deckError) {
+        throw new Error(
+          'Errore caricamento mazzo: ' + deckError.message
+        );
+      }
+
+      if (!deck) {
+        return;
+      }
+
+      currentDeckId = deck.id;
+
+      document.getElementById('deckTitle').textContent =
+        deck.name || 'Il mio mazzo';
+
+      deckState = {
+        main: {},
+        extra: {},
+        side: {}
+      };
+
+      (deck.deck_cards || []).forEach((row) => {
+        const card = allCards.find(
+          (item) => item.id === row.card_version_id
+        );
+
+        if (!card) {
+          return;
+        }
+
+        if (
+          row.zone === 'main' ||
+          row.zone === 'extra' ||
+          row.zone === 'side'
+        ) {
+          deckState[row.zone][card.id] =
+            row.quantity;
+        }
+      });
+    }
+
+    async function saveDeck() {
+      const validation = validateDeck();
+
+      if (!validation.valid) {
+        showDeckMessage(
+          'Correggi il mazzo prima di salvarlo: deve contenere esattamente 30 carte principali.',
+          true
+        );
+
+        return false;
+      }
+
+      showDeckMessage('Salvataggio mazzo in corso…');
+
+      let deckId = currentDeckId;
+
+      if (!deckId) {
+        const { data, error } =
+          await window.supabaseClient
+            .from('decks')
+            .insert({
+              owner_id: profile.id,
+              name: 'Mazzo Penombra',
+              description: 'Mazzo predefinito del giocatore',
+              is_default: true
+            })
+            .select('id')
+            .single();
+
+        if (error) {
+          showDeckMessage(
+            'Errore creazione mazzo: ' + error.message,
+            true
+          );
+
+          return false;
+        }
+
+        deckId = data.id;
+        currentDeckId = deckId;
+      } else {
+        const { error: deleteError } =
+          await window.supabaseClient
+            .from('deck_cards')
+            .delete()
+            .eq('deck_id', deckId);
+
+        if (deleteError) {
+          showDeckMessage(
+            'Errore aggiornamento carte mazzo: ' +
+            deleteError.message,
+            true
+          );
+
+          return false;
+        }
+      }
+
+      const rows = deckRowsFromState();
+
+      if (rows.length) {
+        const payload = rows.map((row) => ({
+          deck_id: deckId,
+          ...row
+        }));
+
+        const { error: insertError } =
+          await window.supabaseClient
+            .from('deck_cards')
+            .insert(payload);
+
+        if (insertError) {
+          showDeckMessage(
+            'Errore salvataggio carte: ' +
+            insertError.message,
+            true
+          );
+
+          return false;
+        }
+      }
+
+      showDeckMessage('Mazzo salvato correttamente.');
+
+      return true;
+    }
+
+    function calculateThreat(card) {
+      if (card.threat_rating !== null &&
+          card.threat_rating !== undefined) {
+        return Number(card.threat_rating);
+      }
+
+      const attack =
+        Number(card.attack || 0);
+
+      const health =
+        Number(card.health || 0);
+
+      const mana =
+        Number(card.mana_cost || 0);
+
+      let effectBonus = 0;
+
+      const effect =
+        card.effect_code;
+
+      const amount =
+        Number(
+          card.effect_parameters?.amount || 0
+        );
+
+      if (effect === 'damage_player') {
+        effectBonus = amount * 3;
+      }
+
+      if (effect === 'damage_unit') {
+        effectBonus = amount * 2;
+      }
+
+      if (effect === 'draw') {
+        effectBonus = amount * 4;
+      }
+
+      if (effect === 'destroy_unit_max_health') {
+        effectBonus = amount * 3;
+      }
+
+      if (card.card_type === 'extra') {
+        effectBonus += 12;
+      }
+
+      return (
+        attack * 2 +
+        health * 1.25 +
+        effectBonus -
+        mana * 1.1
+      );
+    }
+
+    function getAISignatureCard() {
+      const candidates =
+        allCards.filter(
+          (card) =>
+            card.engine_supported &&
+            card.ai_supported
+        );
+
+      if (!candidates.length) {
+        return null;
+      }
+
+      return candidates
+        .slice()
+        .sort(
+          (a, b) =>
+            calculateThreat(b) -
+            calculateThreat(a)
+        )[0];
+    }
+
+    function renderSignatureCard() {
+      const area =
+        document.getElementById('signatureCardArea');
+
+      const card =
+        getAISignatureCard();
+
+      if (!card) {
+        area.innerHTML =
+          '<p class="muted">Nessuna carta IA disponibile.</p>';
+
+        return;
+      }
+
+      const threat =
+        calculateThreat(card).toFixed(1);
+
+      area.innerHTML = `
+        <div class="signature-card">
+          <div>
+            ${window.PenombraCards.render(
+              card,
+              {
+                imageUrl: card.signed_image_url || '',
+                interactive: false
+              }
+            )}
+          </div>
+
+          <div>
+            <h3>Carta firma dello Stratega della Bruma</h3>
+
+            <p class="muted">
+              <strong>${card.name}</strong> è stata rivelata prima dello scontro.
+            </p>
+
+            <p class="muted">
+              Valore minaccia: <strong>${threat}</strong>
+            </p>
+
+            <p class="muted">
+              La minaccia viene calcolata usando costo, FORZA,
+              RESISTENZA, effetto e tipo di carta.
+            </p>
+          </div>
+        </div>
+      `;
+    }
+
+    function mainDeckCardsForSwap() {
+      return Object.entries(deckState.main)
+        .flatMap(([cardId, amount]) => {
+          const card = getCard(cardId);
+
+          return Array.from(
+            { length: amount },
+            (_, index) => ({
+              key: `${cardId}-${index}`,
+              cardId,
+              card
+            })
+          );
+        });
+    }
+
+    function sideDeckCardsForSwap() {
+      return Object.entries(deckState.side)
+        .flatMap(([cardId, amount]) => {
+          const card = getCard(cardId);
+
+          return Array.from(
+            { length: amount },
+            (_, index) => ({
+              key: `${cardId}-${index}`,
+              cardId,
+              card
+            })
+          );
+        });
+    }
+
+    function renderSwaps() {
+      const list =
+        document.getElementById('swapList');
+
+      const count =
+        document.getElementById('swapCount');
+
+      count.textContent =
+        `${pendingSwaps.length} / ${DECK_RULES.maxSwaps}`;
+
+      list.innerHTML = '';
+
+      if (!pendingSwaps.length) {
+        list.innerHTML =
+          '<p class="muted">Nessuna sostituzione selezionata.</p>';
+
+        return;
+      }
+
+      pendingSwaps.forEach((swap, index) => {
+        const row =
+          document.createElement('div');
+
+        row.className =
+          'side-swap-row';
+
+        const mainOptions =
+          mainDeckCardsForSwap()
+            .map(
+              (item) => `
+                <option
+                  value="${item.cardId}"
+                  ${
+                    item.cardId === swap.outCardId
+                      ? 'selected'
+                      : ''
+                  }
+                >
+                  ${item.card.name}
+                </option>
+              `
+            )
+            .join('');
+
+        const sideOptions =
+          sideDeckCardsForSwap()
+            .map(
+              (item) => `
+                <option
+                  value="${item.cardId}"
+                  ${
+                    item.cardId === swap.inCardId
+                      ? 'selected'
+                      : ''
+                  }
+                >
+                  ${item.card.name}
+                </option>
+              `
+            )
+            .join('');
+
+        row.innerHTML = `
+          <select data-swap-out="${index}">
+            ${mainOptions}
+          </select>
+
+          <span>⇄</span>
+
+          <select data-swap-in="${index}">
+            ${sideOptions}
+          </select>
+
+          <button data-remove-swap="${index}">
+            Rimuovi
+          </button>
+        `;
+
+        row
+          .querySelector(`[data-swap-out="${index}"]`)
+          .addEventListener('change', (event) => {
+            pendingSwaps[index].outCardId =
+              event.target.value;
+          });
+
+        row
+          .querySelector(`[data-swap-in="${index}"]`)
+          .addEventListener('change', (event) => {
+            pendingSwaps[index].inCardId =
+              event.target.value;
+          });
+
+        row
+          .querySelector(`[data-remove-swap="${index}"]`)
+          .addEventListener('click', () => {
+            pendingSwaps.splice(index, 1);
+            renderSwaps();
+          });
+
+        list.appendChild(row);
+      });
+    }
+
+    function addSwap() {
+      if (
+        pendingSwaps.length >=
+        DECK_RULES.maxSwaps
+      ) {
+        return;
+      }
+
+      const mainCards =
+        mainDeckCardsForSwap();
+
+      const sideCards =
+        sideDeckCardsForSwap();
+
+      if (!mainCards.length || !sideCards.length) {
+        showDeckMessage(
+          'Per usare il Side Deck devi avere almeno una carta nel Mazzo principale e una nel Side Deck.',
+          true
+        );
+
+        return;
+      }
+
+      pendingSwaps.push({
+        outCardId: mainCards[0].cardId,
+        inCardId: sideCards[0].cardId
+      });
+
+      renderSwaps();
+    }
+
+    function decrementZone(zone, cardId) {
+      const current =
+        quantity(zone, cardId);
+
+      if (current <= 1) {
+        delete deckState[zone][cardId];
+      } else {
+        deckState[zone][cardId] = current - 1;
+      }
+    }
+
+    function incrementZone(zone, cardId) {
+      deckState[zone][cardId] =
+        quantity(zone, cardId) + 1;
+    }
+
+    function applySideSwaps() {
+      const mainBackup =
+        JSON.parse(JSON.stringify(deckState.main));
+
+      const sideBackup =
+        JSON.parse(JSON.stringify(deckState.side));
+
+      try {
+        pendingSwaps.forEach((swap) => {
+          if (
+            quantity('main', swap.outCardId) < 1 ||
+            quantity('side', swap.inCardId) < 1
+          ) {
+            throw new Error(
+              'Una carta selezionata per lo scambio non è più disponibile.'
+            );
+          }
+
+          decrementZone('main', swap.outCardId);
+          decrementZone('side', swap.inCardId);
+
+          incrementZone('main', swap.inCardId);
+          incrementZone('side', swap.outCardId);
+        });
+
+        const validation =
+          validateDeck();
+
+        if (!validation.valid) {
+          throw new Error(
+            'Gli scambi rendono il mazzo non valido.'
+          );
+        }
+
+        return true;
+      } catch (error) {
+        deckState.main = mainBackup;
+        deckState.side = sideBackup;
+
+        showDeckMessage(
+          error.message,
+          true
+        );
+
+        return false;
+      }
+    }
+
+    async function prepareGame() {
+      const validation =
+        validateDeck();
+
+      if (!validation.valid) {
+        showDeckMessage(
+          'Il mazzo deve essere valido prima di preparare una partita.',
+          true
+        );
+
+        return;
+      }
+
+      const saved =
+        await saveDeck();
+
+      if (!saved) {
+        return;
+      }
+
+      pendingSwaps = [];
+
+      renderSignatureCard();
+      renderSwaps();
+
+      document.getElementById('preGamePanel')
+        .classList.remove('hidden');
+
+      document.getElementById('preGamePanel')
+        .scrollIntoView({
+          behavior: 'smooth'
+        });
+    }
+
+    async function confirmAndStartGame() {
+      const backup =
+        JSON.parse(JSON.stringify(deckState));
+
+      if (!applySideSwaps()) {
+        return;
+      }
+
+      const saved =
+        await saveDeck();
+
+      if (!saved) {
+        deckState = backup;
+        renderDeckbuilder();
+        return;
+      }
+
+      const signature =
+        getAISignatureCard();
+
+      const setup = {
+        deckId: currentDeckId,
+        signatureCardId: signature?.id || null,
+        signatureCardCode: signature?.card_code || null,
+        swaps: pendingSwaps,
+        startedAt: new Date().toISOString()
+      };
+
+      localStorage.setItem(
+        'penombra_pending_game',
+        JSON.stringify(setup)
+      );
+
+      location.href = 'game.html';
+    }
+
+    async function initializeDeckbuilder() {
+      try {
+        profile =
+          await window.PenombraAuth.getMyProfile();
+
+        document.getElementById('loadingPanel')
+          .hidden = true;
+
+        if (!profile) {
+          document.getElementById('notLoggedPanel')
+            .hidden = false;
+
+          return;
+        }
+
+        document.getElementById('deckbuilderPanel')
+          .hidden = false;
+
+        document.getElementById('deckTitle')
+          .textContent =
+          `Mazzo di ${profile.display_name || profile.username}`;
+
+        await loadActiveCards();
+        await loadMyDeck();
+
+        renderDeckbuilder();
+      } catch (error) {
+        console.error(error);
+
+        document.getElementById('loadingPanel')
+          .innerHTML =
+          `<p class="muted">Errore: ${error.message}</p>`;
+      }
+    }
+
+    document.getElementById('searchCards')
+      .addEventListener('input', renderPool);
+
+    document.getElementById('typeFilter')
+      .addEventListener('change', renderPool);
+
+    document.getElementById('saveDeckButton')
+      .addEventListener('click', saveDeck);
+
+    document.getElementById('prepareGameButton')
+      .addEventListener('click', prepareGame);
+
+    document.getElementById('addSwapButton')
+      .addEventListener('click', addSwap);
+
+    document.getElementById('confirmSideButton')
+      .addEventListener('click', confirmAndStartGame);
+
+    document.getElementById('cancelPrepareButton')
+      .addEventListener('click', () => {
+        document.getElementById('preGamePanel')
+          .classList.add('hidden');
+      });
+
+    document.getElementById('logoutButton')
+      .addEventListener('click', async () => {
+        await window.PenombraAuth.signOut();
+        location.href = 'index.html';
+      });
+
+    window.addEventListener(
+      'penombra:supabase-ready',
+      initializeDeckbuilder
+    );
+  </script>
+</body>
+</html>

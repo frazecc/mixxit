@@ -1,4 +1,4 @@
-/* Reusable card preview modal for Mixxit. */
+/* Yu-Gi-Oh!-style rectangular card preview and interaction helper. */
 (function () {
   'use strict';
 
@@ -10,34 +10,31 @@
     extra: 'Mostrissimo'
   };
 
-  function escape(value) {
-    const node = document.createElement('span');
-    node.textContent = value == null ? '' : String(value);
-    return node.innerHTML;
-  }
-
   function label(card) {
     return LABELS[card?.type] || card?.type || 'Carta';
   }
 
   function open(card, onConfirm, options = {}) {
-    const modal = document.getElementById('cardPreviewModal');
-    if (!modal) return;
+    const modal = document.getElementById('modal');
+    const standard = document.getElementById('standardDialog');
+    const preview = document.getElementById('cardDialog');
+    if (!modal || !standard || !preview) return;
 
-    const image = card.imageUrl || card.image_path || card.imagePath || '';
-    const stats = card.type === 'extra'
+    standard.hidden = true;
+    preview.hidden = false;
+
+    document.getElementById('cardPreviewTitle').textContent = card.name || 'Carta';
+    document.getElementById('cardPreviewType').textContent = `${label(card)} · ${Number(card.mana ?? card.mana_cost ?? 0)} mana`;
+    document.getElementById('cardPreviewStats').textContent = card.type === 'extra'
       ? `✨ ${Number(card.sacrifices ?? card.sacrifice_requirement ?? 0)} sacrifici`
       : card.attack != null || card.health != null
         ? `⚔ ${card.attack ?? 0} · 🛡 ${card.health ?? 0}`
         : '';
-
-    document.getElementById('cardPreviewTitle').textContent = card.name || 'Carta';
-    document.getElementById('cardPreviewType').textContent = `${label(card)} · ${Number(card.mana ?? card.mana_cost ?? 0)} mana`;
-    document.getElementById('cardPreviewStats').textContent = stats;
     document.getElementById('cardPreviewRules').textContent = card.rulesText || card.rules_text || 'Nessun effetto.';
 
     const art = document.getElementById('cardPreviewArt');
     art.innerHTML = '';
+    const image = card.imageUrl || card.image_path || card.imagePath || '';
     if (image) {
       const img = document.createElement('img');
       img.src = image;
@@ -54,15 +51,19 @@
       close();
       if (typeof onConfirm === 'function') onConfirm(card);
     };
-
     document.getElementById('cardPreviewCancel').onclick = close;
     modal.classList.add('open');
   }
 
   function close() {
-    const modal = document.getElementById('cardPreviewModal');
-    if (modal) modal.classList.remove('open');
+    const modal = document.getElementById('modal');
+    if (!modal) return;
+    modal.classList.remove('open');
+    const standard = document.getElementById('standardDialog');
+    const preview = document.getElementById('cardDialog');
+    if (standard) standard.hidden = false;
+    if (preview) preview.hidden = true;
   }
 
-  window.MixxitCardPreview = { open, close, escape, label };
+  window.MixxitCardPreview = { open, close, label };
 })();

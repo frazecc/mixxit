@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <title>Console Admin — La Partita della Penombra</title>
+
+  <link rel="stylesheet" href="assets/css/app.css">
+
+  <style>
+    .admin-layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 420px) 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .admin-section {
+      display: grid;
+      gap: 12px;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+    }
+
+    th {
+      color: var(--muted);
+      background: #091524;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .admin-message {
+      min-height: 18px;
+      font-size: 12px;
+      color: var(--green);
+    }
+
+    .admin-error {
+      color: var(--danger);
+    }
+
+    @media (max-width: 900px) {
+      .admin-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="site-header">
+    <div>
+      <h1 class="site-title">🔒 Console Admin</h1>
+
+      <div class="site-subtitle">
+        La Partita della Penombra · Utenti, carte, set, replay e statistiche
+      </div>
+    </div>
+
+    <nav class="site-nav">
+      <a class="nav-link button--secondary" href="index.html">
+        Gioco
+      </a>
+
+      <a class="nav-link button--secondary" href="deckbuilder.html">
+        Deckbuilder
+      </a>
+
+      <button id="logoutButton" class="button button--secondary">
+        Esci
+      </button>
+    </nav>
+  </header>
+
+  <main class="page">
+    <section id="loadingPanel" class="panel">
+      <p class="muted">Verifica dei permessi Admin in corso…</p>
+    </section>
+
+    <section id="notAdminPanel" class="panel" hidden>
+      <h2>Accesso negato</h2>
+
+      <p class="muted">
+        Questa pagina è riservata agli amministratori.
+      </p>
+
+      <a class="button" href="index.html">
+        Torna al gioco
+      </a>
+    </section>
+
+    <section id="adminPanel" hidden>
+      <div class="admin-layout">
+        <section class="panel admin-section">
+          <div>
+            <h2>Crea utente</h2>
+
+            <p class="muted">
+              L’utente vedrà e userà soltanto il nome utente.
+              Il sistema creerà internamente un account
+              <code>@test.local</code>.
+            </p>
+          </div>
+
+          <div class="field">
+            <label for="newUsername">Nome utente</label>
+
+            <input
+              id="newUsername"
+              type="text"
+              placeholder="es. francesco"
+              maxlength="20"
+            >
+          </div>
+
+          <div class="field">
+            <label for="newDisplayName">Nome visualizzato</label>
+
+            <input
+              id="newDisplayName"
+              type="text"
+              placeholder="es. Francesco"
+              maxlength="50"
+            >
+          </div>
+
+          <div class="field">
+            <label for="newPassword">Password temporanea</label>
+
+            <input
+              id="newPassword"
+              type="password"
+              placeholder="Almeno 8 caratteri"
+            >
+          </div>
+
+          <div class="field">
+            <label for="newRole">Ruolo</label>
+
+            <select id="newRole">
+              <option value="player">Giocatore</option>
+              <option value="admin">Amministratore</option>
+            </select>
+          </div>
+
+          <button id="createUserButton" class="button button--green">
+            Crea utente
+          </button>
+
+          <div id="createUserMessage" class="admin-message"></div>
+        </section>
+
+        <section class="panel">
+          <h2>Utenti creati</h2>
+
+          <p class="muted">
+            Elenco dei profili visibili nel database.
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Nome</th>
+                  <th>Ruolo</th>
+                  <th>Creato</th>
+                </tr>
+              </thead>
+
+              <tbody id="usersTableBody">
+                <tr>
+                  <td colspan="4" class="muted">
+                    Caricamento…
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel" style="margin-top:16px">
+        <h2>Card Studio</h2>
+
+        <p class="muted">
+          Il Card Studio con upload immagini, preview Pokémon-style,
+          creazione, modifica, versionamento, attivazione, disattivazione
+          ed eliminazione delle carte verrà aggiunto qui nel prossimo file.
+        </p>
+      </section>
+    </section>
+  </main>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/supabase-client.js"></script>
+  <script src="assets/js/auth.js"></script>
+
+  <script>
+    let currentAdmin = null;
+
+    function showMessage(message, isError = false) {
+      const element =
+        document.getElementById('createUserMessage');
+
+      element.textContent = message;
+
+      element.className = isError
+        ? 'admin-message admin-error'
+        : 'admin-message';
+    }
+
+    async function loadUsers() {
+      const body =
+        document.getElementById('usersTableBody');
+
+      const { data, error } =
+        await window.supabaseClient
+          .from('profiles')
+          .select(`
+            id,
+            username,
+            display_name,
+            role,
+            created_at
+          `)
+          .order('created_at', {
+            ascending: false
+          });
+
+      if (error) {
+        body.innerHTML = `
+          <tr>
+            <td colspan="4" class="muted">
+              Errore: ${error.message}
+            </td>
+          </tr>
+        `;
+
+        return;
+      }
+
+      body.innerHTML = '';
+
+      (data || []).forEach((profile) => {
+        const row = document.createElement('tr');
+
+        row.innerHTML = `
+          <td>${profile.username || '—'}</td>
+          <td>${profile.display_name || '—'}</td>
+          <td>${profile.role || 'player'}</td>
+          <td>${new Date(profile.created_at).toLocaleString('it-IT')}</td>
+        `;
+
+        body.appendChild(row);
+      });
+
+      if (!data?.length) {
+        body.innerHTML = `
+          <tr>
+            <td colspan="4" class="muted">
+              Nessun utente trovato.
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    async function createUser() {
+      const username =
+        document.getElementById('newUsername').value;
+
+      const displayName =
+        document.getElementById('newDisplayName').value;
+
+      const password =
+        document.getElementById('newPassword').value;
+
+      const role =
+        document.getElementById('newRole').value;
+
+      const button =
+        document.getElementById('createUserButton');
+
+      button.disabled = true;
+
+      showMessage('Creazione utente in corso…');
+
+      try {
+        const user =
+          await window.PenombraAuth.createUser({
+            username,
+            password,
+            displayName,
+            role
+          });
+
+        showMessage(
+          `Utente creato: ${user.username} (${user.role}).`
+        );
+
+        document.getElementById('newUsername').value = '';
+        document.getElementById('newDisplayName').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('newRole').value = 'player';
+
+        await loadUsers();
+      } catch (error) {
+        showMessage(
+          error.message || 'Errore nella creazione dell’utente.',
+          true
+        );
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function initializeAdmin() {
+      try {
+        currentAdmin =
+          await window.PenombraAuth.requireAdmin();
+
+        document.getElementById('loadingPanel').hidden = true;
+
+        document.getElementById('adminPanel').hidden = false;
+
+        await loadUsers();
+      } catch (error) {
+        console.warn(error);
+
+        document.getElementById('loadingPanel').hidden = true;
+
+        document.getElementById('notAdminPanel').hidden = false;
+      }
+    }
+
+    document.getElementById('createUserButton')
+      .addEventListener('click', createUser);
+
+    document.getElementById('logoutButton')
+      .addEventListener('click', async () => {
+        await window.PenombraAuth.signOut();
+        location.href = 'index.html';
+      });
+
+    window.addEventListener(
+      'penombra:supabase-ready',
+      initializeAdmin
+    );
+  </script>
+</body>
+</html>

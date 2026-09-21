@@ -52,29 +52,29 @@ window.PenombraCards = {
 
     return `
       <article
-        class="penombra-card ${frameClass} ${interactive}"
+        class="penumombra-card ${frameClass} ${interactive}"
         data-card-id="${card.card_id || card.id || ''}"
       >
-        <header class="penombra-card__header">
-          <div class="penombra-card__name">
+        <header class="penumombra-card__header">
+          <div class="penumombra-card__name">
             ${this.escapeHtml(card.name)}
           </div>
 
-          <div class="penombra-card__mana">
+          <div class="penumombra-card__mana">
             💎 ${card.mana_cost ?? 0}
           </div>
         </header>
 
-        <div class="penombra-card__type">
+        <div class="penumombra-card__type">
           ${typeLabel}${card.rarity ? ` · ${this.escapeHtml(card.rarity)}` : ''}
         </div>
 
-        <div class="penombra-card__art">
+        <div class="penumombra-card__art">
           ${
             imageUrl
               ? `<img src="${imageUrl}" alt="${this.escapeHtml(card.name)}">`
               : `
-                <div class="penombra-card__art-placeholder">
+                <div class="penumombra-card__art-placeholder">
                   ✦
                   <span>Illustrazione</span>
                 </div>
@@ -82,30 +82,30 @@ window.PenombraCards = {
           }
         </div>
 
-        <div class="penombra-card__rules">
+        <div class="penumombra-card__rules">
           ${this.escapeHtml(card.rules_text || 'Nessun testo effetto.')}
         </div>
 
         ${
           isMonster
             ? `
-              <footer class="penombra-card__footer">
-                <div class="penombra-card__stat">
+              <footer class="penumombra-card__footer">
+                <div class="penumombra-card__stat">
                   ⚔ <strong>${card.attack ?? 0}</strong>
                 </div>
 
-                <div class="penombra-card__code">
+                <div class="penumombra-card__code">
                   ${this.escapeHtml(card.card_code || '')} ${version}
                 </div>
 
-                <div class="penombra-card__stat">
+                <div class="penumombra-card__stat">
                   🛡 <strong>${card.health ?? 0}</strong>
                 </div>
               </footer>
             `
             : `
-              <footer class="penombra-card__footer penombra-card__footer--spell">
-                <div class="penombra-card__code">
+              <footer class="penumombra-card__footer penumombra-card__footer--spell">
+                <div class="penumombra-card__code">
                   ${this.escapeHtml(card.card_code || '')} ${version}
                 </div>
               </footer>

@@ -11,7 +11,14 @@
   <style>
     .admin-layout {
       display: grid;
-      grid-template-columns: minmax(280px, 420px) 1fr;
+      grid-template-columns: minmax(280px, 410px) 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .studio-layout {
+      display: grid;
+      grid-template-columns: minmax(300px, 1fr) minmax(230px, 340px);
       gap: 16px;
       align-items: start;
     }
@@ -19,6 +26,16 @@
     .admin-section {
       display: grid;
       gap: 12px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .full-field {
+      grid-column: 1 / -1;
     }
 
     .table-wrap {
@@ -58,8 +75,89 @@
       color: var(--danger);
     }
 
-    @media (max-width: 900px) {
-      .admin-layout {
+    .studio-preview {
+      position: sticky;
+      top: 90px;
+    }
+
+    .card-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 10px;
+    }
+
+    .card-admin-item {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #0a1727;
+    }
+
+    .card-admin-item__meta {
+      padding: 8px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .card-admin-item__actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      padding: 8px;
+      border-top: 1px solid var(--line);
+    }
+
+    .card-admin-item__actions button {
+      border: 0;
+      border-radius: 8px;
+      padding: 7px;
+      color: white;
+      background: #334155;
+      cursor: pointer;
+      font-size: 11px;
+    }
+
+    .card-admin-item__actions button.danger {
+      background: #991b1b;
+    }
+
+    .card-admin-item__actions button.green {
+      background: #16803b;
+    }
+
+    .hidden-field {
+      display: none !important;
+    }
+
+    .image-preview {
+      width: 100%;
+      max-height: 180px;
+      object-fit: cover;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #07111f;
+    }
+
+    .small-note {
+      margin: 0;
+      font-size: 11px;
+      line-height: 1.4;
+      color: var(--muted);
+    }
+
+    @media (max-width: 1000px) {
+      .admin-layout,
+      .studio-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .studio-preview {
+        position: static;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .form-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -72,7 +170,7 @@
       <h1 class="site-title">🔒 Console Admin</h1>
 
       <div class="site-subtitle">
-        La Partita della Penombra · Utenti, carte, set, replay e statistiche
+        La Partita della Penombra · Utenti, Card Studio e archivio
       </div>
     </div>
 
@@ -93,7 +191,9 @@
 
   <main class="page">
     <section id="loadingPanel" class="panel">
-      <p class="muted">Verifica dei permessi Admin in corso…</p>
+      <p class="muted">
+        Verifica dei permessi Admin in corso…
+      </p>
     </section>
 
     <section id="notAdminPanel" class="panel" hidden>
@@ -109,21 +209,20 @@
     </section>
 
     <section id="adminPanel" hidden>
-      <div class="admin-layout">
+      <section class="admin-layout">
         <section class="panel admin-section">
           <div>
             <h2>Crea utente</h2>
 
-            <p class="muted">
-              L’utente vedrà e userà soltanto il nome utente.
-              Il sistema creerà internamente un account
-              <code>@test.local</code>.
+            <p class="small-note">
+              L’utente utilizza solamente username e password.
+              Il sistema crea internamente l’account tecnico
+              <code>username@test.local</code>.
             </p>
           </div>
 
           <div class="field">
             <label for="newUsername">Nome utente</label>
-
             <input
               id="newUsername"
               type="text"
@@ -134,7 +233,6 @@
 
           <div class="field">
             <label for="newDisplayName">Nome visualizzato</label>
-
             <input
               id="newDisplayName"
               type="text"
@@ -145,7 +243,6 @@
 
           <div class="field">
             <label for="newPassword">Password temporanea</label>
-
             <input
               id="newPassword"
               type="password"
@@ -155,7 +252,6 @@
 
           <div class="field">
             <label for="newRole">Ruolo</label>
-
             <select id="newRole">
               <option value="player">Giocatore</option>
               <option value="admin">Amministratore</option>
@@ -171,10 +267,6 @@
 
         <section class="panel">
           <h2>Utenti creati</h2>
-
-          <p class="muted">
-            Elenco dei profili visibili nel database.
-          </p>
 
           <div class="table-wrap">
             <table>
@@ -197,16 +289,237 @@
             </table>
           </div>
         </section>
-      </div>
+      </section>
 
       <section class="panel" style="margin-top:16px">
-        <h2>Card Studio</h2>
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
+          <div>
+            <h2 style="margin-bottom:4px">🎴 Card Studio</h2>
 
-        <p class="muted">
-          Il Card Studio con upload immagini, preview Pokémon-style,
-          creazione, modifica, versionamento, attivazione, disattivazione
-          ed eliminazione delle carte verrà aggiunto qui nel prossimo file.
-        </p>
+            <p class="small-note">
+              Crea carte, carica illustrazioni, controlla l’anteprima
+              e pubblica nel catalogo soltanto effetti supportati da motore e IA.
+            </p>
+          </div>
+
+          <button id="newCardButton" class="button button--green">
+            + Nuova carta
+          </button>
+        </div>
+
+        <div class="studio-layout" style="margin-top:16px">
+          <section class="admin-section">
+            <input id="editingCardId" type="hidden">
+            <input id="uploadedImagePath" type="hidden">
+
+            <div class="form-grid">
+              <div class="field">
+                <label for="cardName">Nome carta</label>
+                <input id="cardName" type="text" placeholder="Esploratore di Bruma">
+              </div>
+
+              <div class="field">
+                <label for="cardType">Tipo</label>
+                <select id="cardType">
+                  <option value="monster">Mostro</option>
+                  <option value="sorcery">Stregoneria</option>
+                  <option value="instant">Istantaneo</option>
+                  <option value="extra">Extra Deck</option>
+                  <option value="structure">Struttura</option>
+                  <option value="equipment">Equipaggiamento</option>
+                  <option value="territory">Territorio</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="cardMana">Costo mana</label>
+                <input id="cardMana" type="number" min="0" max="20" value="1">
+              </div>
+
+              <div class="field">
+                <label for="cardRarity">Rarità</label>
+                <select id="cardRarity">
+                  <option>Comune</option>
+                  <option>Non comune</option>
+                  <option>Rara</option>
+                  <option>Epica</option>
+                  <option>Leggendaria</option>
+                </select>
+              </div>
+
+              <div id="attackField" class="field">
+                <label for="cardAttack">FORZA</label>
+                <input id="cardAttack" type="number" min="0" max="99" value="1">
+              </div>
+
+              <div id="healthField" class="field">
+                <label for="cardHealth">RESISTENZA</label>
+                <input id="cardHealth" type="number" min="1" max="99" value="1">
+              </div>
+
+              <div id="sacrificeField" class="field hidden-field">
+                <label for="cardSacrifices">Sacrifici richiesti</label>
+                <input id="cardSacrifices" type="number" min="0" max="5" value="2">
+              </div>
+
+              <div id="requirementField" class="field hidden-field">
+                <label for="cardRequirement">Requisito speciale</label>
+                <input
+                  id="cardRequirement"
+                  type="text"
+                  placeholder="es. FORZA totale almeno 4"
+                >
+              </div>
+
+              <div class="field">
+                <label for="cardEffect">Effetto supportato</label>
+
+                <select id="cardEffect">
+                  <option value="none">Nessun effetto</option>
+                  <option value="draw">Pesca carte</option>
+                  <option value="damage_player">Danno diretto al giocatore</option>
+                  <option value="damage_unit">Danno a un mostro</option>
+                  <option value="destroy_unit_max_health">Distruggi mostro debole</option>
+                  <option value="buff_unit_attack">Buff FORZA</option>
+                  <option value="buff_unit_health">Buff RESISTENZA</option>
+                  <option value="move_unit">Muovi mostro</option>
+                  <option value="bounce_unit">Rimanda mostro in mano</option>
+                  <option value="extra_debuff_enemy_attack">Debuff FORZA nemici</option>
+                  <option value="column_attack">Attacco in colonna</option>
+                  <option value="custom_pending">Effetto futuro non implementato</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="effectAmount">Valore effetto</label>
+                <input
+                  id="effectAmount"
+                  type="number"
+                  min="0"
+                  value="1"
+                >
+              </div>
+
+              <div class="field">
+                <label for="cardTiming">Quando si gioca</label>
+
+                <select id="cardTiming">
+                  <option value="main_phase">Fase principale</option>
+                  <option value="response_attack">Risposta a un attacco</option>
+                  <option value="response_any">Risposta a un’azione</option>
+                  <option value="on_enter">Quando entra in gioco</option>
+                  <option value="passive">Passivo</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="cardStatus">Stato</label>
+
+                <select id="cardStatus">
+                  <option value="inactive">Disattivata / Bozza</option>
+                  <option value="active">Attiva nel catalogo</option>
+                </select>
+              </div>
+
+              <div class="field full-field">
+                <label for="cardTags">Tag separati da virgola</label>
+
+                <input
+                  id="cardTags"
+                  type="text"
+                  placeholder="bruma, esploratore, pesca"
+                >
+              </div>
+
+              <div class="field full-field">
+                <label for="cardRulesText">Testo effetto mostrato sulla carta</label>
+
+                <textarea
+                  id="cardRulesText"
+                  rows="4"
+                  placeholder="Quando entra in gioco, pesca 1 carta."
+                ></textarea>
+              </div>
+
+              <div class="field full-field">
+                <label for="cardThreat">Valore minaccia IA opzionale</label>
+
+                <input
+                  id="cardThreat"
+                  type="number"
+                  step="0.1"
+                  placeholder="Lascia vuoto per calcolo automatico futuro"
+                >
+              </div>
+
+              <div class="field full-field">
+                <label for="cardImage">Illustrazione carta</label>
+
+                <input
+                  id="cardImage"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                >
+
+                <p class="small-note">
+                  Formati: PNG, JPG o WebP. Massimo consigliato: 3 MB.
+                  L’immagine viene caricata manualmente nel bucket privato.
+                </p>
+
+                <img
+                  id="imagePreview"
+                  class="image-preview"
+                  alt="Anteprima immagine"
+                  hidden
+                >
+              </div>
+            </div>
+
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button id="saveCardButton" class="button button--green">
+                Salva carta
+              </button>
+
+              <button id="resetCardButton" class="button button--secondary">
+                Annulla modifica
+              </button>
+            </div>
+
+            <div id="cardStudioMessage" class="admin-message"></div>
+          </section>
+
+          <aside class="studio-preview">
+            <div class="deck-note">Anteprima carta</div>
+
+            <div id="cardPreview"></div>
+
+            <p class="small-note" style="margin-top:10px">
+              Il codice è generato automaticamente dopo il salvataggio.
+              Modificando una carta esistente viene creata una nuova versione,
+              così i replay storici restano corretti.
+            </p>
+          </aside>
+        </div>
+      </section>
+
+      <section class="panel" style="margin-top:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <div>
+            <h2 style="margin-bottom:4px">Catalogo carte</h2>
+            <p class="small-note">
+              Le carte eliminate restano disponibili nei replay storici,
+              ma spariscono dal catalogo e dai nuovi mazzi.
+            </p>
+          </div>
+
+          <select id="cardFilter">
+            <option value="all">Tutte le carte</option>
+            <option value="active">Solo attive</option>
+            <option value="inactive">Solo disattivate</option>
+          </select>
+        </div>
+
+        <div id="cardsCatalog" class="card-list" style="margin-top:14px"></div>
       </section>
     </section>
   </main>
@@ -214,19 +527,827 @@
   <script src="assets/js/config.js"></script>
   <script src="assets/js/supabase-client.js"></script>
   <script src="assets/js/auth.js"></script>
+  <script src="assets/js/card-renderer.js"></script>
 
   <script>
     let currentAdmin = null;
+    let cardsCache = [];
 
-    function showMessage(message, isError = false) {
-      const element =
-        document.getElementById('createUserMessage');
+    const effectInfo = {
+      none: {
+        parameter: 0,
+        label: 'Nessun parametro richiesto'
+      },
+
+      draw: {
+        parameter: 1,
+        label: 'Numero di carte pescate'
+      },
+
+      damage_player: {
+        parameter: 3,
+        label: 'Danno ai PV avversari'
+      },
+
+      damage_unit: {
+        parameter: 2,
+        label: 'Danno al mostro bersaglio'
+      },
+
+      destroy_unit_max_health: {
+        parameter: 3,
+        label: 'RESISTENZA massima bersaglio'
+      },
+
+      buff_unit_attack: {
+        parameter: 1,
+        label: 'Bonus FORZA'
+      },
+
+      buff_unit_health: {
+        parameter: 3,
+        label: 'Bonus RESISTENZA'
+      },
+
+      move_unit: {
+        parameter: 1,
+        label: 'Distanza movimento'
+      },
+
+      bounce_unit: {
+        parameter: 0,
+        label: 'Nessun parametro richiesto'
+      },
+
+      extra_debuff_enemy_attack: {
+        parameter: 1,
+        label: 'Riduzione FORZA'
+      },
+
+      column_attack: {
+        parameter: 1,
+        label: 'Durata in turni'
+      },
+
+      custom_pending: {
+        parameter: 0,
+        label: 'Non pubblicabile nel PvE'
+      }
+    };
+
+    function showMessage(id, message, isError = false) {
+      const element = document.getElementById(id);
 
       element.textContent = message;
 
       element.className = isError
         ? 'admin-message admin-error'
         : 'admin-message';
+    }
+
+    function currentCardForm() {
+      const tags = document.getElementById('cardTags').value
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter(Boolean);
+
+      const effectCode =
+        document.getElementById('cardEffect').value;
+
+      const cardType =
+        document.getElementById('cardType').value;
+
+      const isUnit =
+        cardType === 'monster' ||
+        cardType === 'extra';
+
+      return {
+        name: document.getElementById('cardName').value.trim(),
+        cardType,
+        manaCost: Number(
+          document.getElementById('cardMana').value || 0
+        ),
+        attack: isUnit
+          ? Number(document.getElementById('cardAttack').value || 0)
+          : null,
+        health: isUnit
+          ? Number(document.getElementById('cardHealth').value || 1)
+          : null,
+        sacrificeRequirement: cardType === 'extra'
+          ? Number(document.getElementById('cardSacrifices').value || 2)
+          : 0,
+        specialRequirement: {
+          text:
+            document.getElementById('cardRequirement').value.trim()
+        },
+        rulesText:
+          document.getElementById('cardRulesText').value.trim(),
+        effectCode,
+        effectParameters: {
+          amount: Number(
+            document.getElementById('effectAmount').value || 0
+          )
+        },
+        timing:
+          document.getElementById('cardTiming').value,
+        tags,
+        rarity:
+          document.getElementById('cardRarity').value,
+        threatRating:
+          document.getElementById('cardThreat').value === ''
+            ? null
+            : Number(document.getElementById('cardThreat').value),
+        imagePath:
+          document.getElementById('uploadedImagePath').value || null,
+        imageCrop: {
+          x: 0,
+          y: 0,
+          zoom: 1
+        },
+        frameStyle: cardType,
+        status:
+          document.getElementById('cardStatus').value
+      };
+    }
+
+    function updateTypeVisibility() {
+      const cardType =
+        document.getElementById('cardType').value;
+
+      const isUnit =
+        cardType === 'monster' ||
+        cardType === 'extra';
+
+      document.getElementById('attackField')
+        .classList.toggle('hidden-field', !isUnit);
+
+      document.getElementById('healthField')
+        .classList.toggle('hidden-field', !isUnit);
+
+      document.getElementById('sacrificeField')
+        .classList.toggle(
+          'hidden-field',
+          cardType !== 'extra'
+        );
+
+      document.getElementById('requirementField')
+        .classList.toggle(
+          'hidden-field',
+          cardType !== 'extra'
+        );
+
+      updatePreview();
+    }
+
+    function updateEffectHelp() {
+      const effectCode =
+        document.getElementById('cardEffect').value;
+
+      const effect =
+        effectInfo[effectCode] || effectInfo.none;
+
+      document.getElementById('effectAmount').value =
+        effect.parameter;
+
+      updatePreview();
+    }
+
+    function updatePreview() {
+      const form = currentCardForm();
+
+      const editingId =
+        document.getElementById('editingCardId').value;
+
+      const previewCard = {
+        id: editingId,
+        card_id: editingId,
+        card_code: editingId ? 'VERSIONE NUOVA' : 'CODICE AUTO',
+        version_number: editingId ? '?' : '',
+        name: form.name || 'Nome della carta',
+        card_type: form.cardType,
+        mana_cost: form.manaCost,
+        attack: form.attack,
+        health: form.health,
+        rules_text:
+          form.rulesText || 'Testo dell’effetto della carta.',
+        rarity: form.rarity,
+        image_url:
+          document.getElementById('imagePreview').src || ''
+      };
+
+      document.getElementById('cardPreview').innerHTML =
+        window.PenombraCards.render(
+          previewCard,
+          {
+            imageUrl: previewCard.image_url,
+            interactive: false
+          }
+        );
+    }
+
+    function resetCardForm() {
+      document.getElementById('editingCardId').value = '';
+      document.getElementById('uploadedImagePath').value = '';
+
+      document.getElementById('cardName').value = '';
+      document.getElementById('cardType').value = 'monster';
+      document.getElementById('cardMana').value = '1';
+      document.getElementById('cardRarity').value = 'Comune';
+      document.getElementById('cardAttack').value = '1';
+      document.getElementById('cardHealth').value = '1';
+      document.getElementById('cardSacrifices').value = '2';
+      document.getElementById('cardRequirement').value = '';
+      document.getElementById('cardEffect').value = 'none';
+      document.getElementById('effectAmount').value = '0';
+      document.getElementById('cardTiming').value = 'main_phase';
+      document.getElementById('cardStatus').value = 'inactive';
+      document.getElementById('cardTags').value = '';
+      document.getElementById('cardRulesText').value = '';
+      document.getElementById('cardThreat').value = '';
+      document.getElementById('cardImage').value = '';
+
+      const imagePreview =
+        document.getElementById('imagePreview');
+
+      imagePreview.src = '';
+      imagePreview.hidden = true;
+
+      showMessage('cardStudioMessage', '');
+
+      updateTypeVisibility();
+      updatePreview();
+    }
+
+    async function uploadCardImage() {
+      const fileInput =
+        document.getElementById('cardImage');
+
+      const file = fileInput.files?.[0];
+
+      if (!file) {
+        return null;
+      }
+
+      if (file.size > 3 * 1024 * 1024) {
+        throw new Error(
+          'L’immagine supera il limite di 3 MB.'
+        );
+      }
+
+      const validTypes = [
+        'image/png',
+        'image/jpeg',
+        'image/webp'
+      ];
+
+      if (!validTypes.includes(file.type)) {
+        throw new Error(
+          'Formato non supportato. Usa PNG, JPG o WebP.'
+        );
+      }
+
+      const extension =
+        file.name.split('.').pop().toLowerCase();
+
+      const cleanName =
+        document.getElementById('cardName').value
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9_-]+/g, '-')
+          .replace(/^-|-$/g, '') || 'carta';
+
+      const filename =
+        `${Date.now()}-${cleanName}.${extension}`;
+
+      const path =
+        `${currentAdmin.id}/${filename}`;
+
+      showMessage(
+        'cardStudioMessage',
+        'Caricamento illustrazione in corso…'
+      );
+
+      const { error } =
+        await window.supabaseClient.storage
+          .from('card-art')
+          .upload(path, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+      if (error) {
+        throw new Error(
+          'Upload immagine fallito: ' + error.message
+        );
+      }
+
+      document.getElementById('uploadedImagePath').value = path;
+
+      return path;
+    }
+
+    async function getSignedImageUrl(path) {
+      if (!path) {
+        return '';
+      }
+
+      const { data, error } =
+        await window.supabaseClient.storage
+          .from('card-art')
+          .createSignedUrl(path, 60 * 60);
+
+      if (error) {
+        console.warn(error);
+        return '';
+      }
+
+      return data?.signedUrl || '';
+    }
+
+    async function handleImagePreview() {
+      const file =
+        document.getElementById('cardImage')
+          .files?.[0];
+
+      if (!file) {
+        return;
+      }
+
+      const preview =
+        document.getElementById('imagePreview');
+
+      preview.src =
+        URL.createObjectURL(file);
+
+      preview.hidden = false;
+
+      updatePreview();
+    }
+
+    async function saveCard() {
+      const button =
+        document.getElementById('saveCardButton');
+
+      const editingCardId =
+        document.getElementById('editingCardId').value;
+
+      button.disabled = true;
+
+      try {
+        const uploadedPath =
+          await uploadCardImage();
+
+        const card = currentCardForm();
+
+        if (uploadedPath) {
+          card.imagePath = uploadedPath;
+        }
+
+        if (!card.name) {
+          throw new Error(
+            'Inserisci il nome della carta.'
+          );
+        }
+
+        if (!card.rulesText) {
+          throw new Error(
+            'Inserisci il testo dell’effetto.'
+          );
+        }
+
+        if (
+          card.effectCode === 'custom_pending' &&
+          card.status === 'active'
+        ) {
+          throw new Error(
+            'Gli effetti non implementati non possono essere attivati nel PvE.'
+          );
+        }
+
+        showMessage(
+          'cardStudioMessage',
+          editingCardId
+            ? 'Creazione nuova versione in corso…'
+            : 'Creazione carta in corso…'
+        );
+
+        const { data, error } =
+          await window.supabaseClient.functions.invoke(
+            'admin-card-studio',
+            {
+              body: {
+                action: editingCardId
+                  ? 'update'
+                  : 'create',
+                cardId: editingCardId || undefined,
+                card
+              }
+            }
+          );
+
+        if (error) {
+          throw error;
+        }
+
+        if (!data?.ok) {
+          throw new Error(
+            data?.error ||
+            'Impossibile salvare la carta.'
+          );
+        }
+
+        showMessage(
+          'cardStudioMessage',
+          editingCardId
+            ? 'Carta aggiornata: è stata salvata una nuova versione.'
+            : `Carta creata con codice ${data.cardCode}.`
+        );
+
+        resetCardForm();
+
+        await loadCardsCatalog();
+      } catch (error) {
+        showMessage(
+          'cardStudioMessage',
+          error.message ||
+          'Errore nel salvataggio della carta.',
+          true
+        );
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    function loadCardIntoEditor(row) {
+      const card =
+        row.current_version;
+
+      if (!card) {
+        return;
+      }
+
+      document.getElementById('editingCardId').value =
+        row.id;
+
+      document.getElementById('uploadedImagePath').value =
+        card.image_path || '';
+
+      document.getElementById('cardName').value =
+        card.name || '';
+
+      document.getElementById('cardType').value =
+        card.card_type || 'monster';
+
+      document.getElementById('cardMana').value =
+        card.mana_cost ?? 0;
+
+      document.getElementById('cardRarity').value =
+        card.rarity || 'Comune';
+
+      document.getElementById('cardAttack').value =
+        card.attack ?? 0;
+
+      document.getElementById('cardHealth').value =
+        card.health ?? 1;
+
+      document.getElementById('cardSacrifices').value =
+        card.sacrifice_requirement ?? 2;
+
+      document.getElementById('cardRequirement').value =
+        card.special_requirement?.text || '';
+
+      document.getElementById('cardEffect').value =
+        card.effect_code || 'none';
+
+      document.getElementById('effectAmount').value =
+        card.effect_parameters?.amount ?? 0;
+
+      document.getElementById('cardTiming').value =
+        card.timing || 'main_phase';
+
+      document.getElementById('cardStatus').value =
+        row.status || 'inactive';
+
+      document.getElementById('cardTags').value =
+        (card.tags || []).join(', ');
+
+      document.getElementById('cardRulesText').value =
+        card.rules_text || '';
+
+      document.getElementById('cardThreat').value =
+        card.threat_rating ?? '';
+
+      const imagePreview =
+        document.getElementById('imagePreview');
+
+      if (card.signed_image_url) {
+        imagePreview.src = card.signed_image_url;
+        imagePreview.hidden = false;
+      } else {
+        imagePreview.src = '';
+        imagePreview.hidden = true;
+      }
+
+      updateTypeVisibility();
+      updatePreview();
+
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+
+      showMessage(
+        'cardStudioMessage',
+        `Modifica ${row.card_code}: al salvataggio verrà creata una nuova versione.`
+      );
+    }
+
+    async function duplicateCard(cardId) {
+      if (!confirm('Creare una copia disattivata di questa carta?')) {
+        return;
+      }
+
+      const { data, error } =
+        await window.supabaseClient.functions.invoke(
+          'admin-card-studio',
+          {
+            body: {
+              action: 'duplicate',
+              cardId
+            }
+          }
+        );
+
+      if (error || !data?.ok) {
+        alert(
+          data?.error ||
+          error?.message ||
+          'Errore nella duplicazione.'
+        );
+
+        return;
+      }
+
+      alert(`Copia creata: ${data.cardCode}.`);
+
+      await loadCardsCatalog();
+    }
+
+    async function setCardStatus(cardId, status) {
+      const actionText =
+        status === 'active'
+          ? 'attivare'
+          : 'disattivare';
+
+      if (!confirm(`Vuoi ${actionText} questa carta?`)) {
+        return;
+      }
+
+      const { data, error } =
+        await window.supabaseClient.functions.invoke(
+          'admin-card-studio',
+          {
+            body: {
+              action: 'set-status',
+              cardId,
+              status
+            }
+          }
+        );
+
+      if (error || !data?.ok) {
+        alert(
+          data?.error ||
+          error?.message ||
+          'Errore nel cambio stato.'
+        );
+
+        return;
+      }
+
+      await loadCardsCatalog();
+    }
+
+    async function deleteCard(cardId) {
+      if (
+        !confirm(
+          'Vuoi eliminare questa carta dal catalogo? Se è presente in replay storici verrà solo nascosta e disattivata.'
+        )
+      ) {
+        return;
+      }
+
+      const { data, error } =
+        await window.supabaseClient.functions.invoke(
+          'admin-card-studio',
+          {
+            body: {
+              action: 'delete',
+              cardId
+            }
+          }
+        );
+
+      if (error || !data?.ok) {
+        alert(
+          data?.error ||
+          error?.message ||
+          'Errore durante l’eliminazione.'
+        );
+
+        return;
+      }
+
+      alert(
+        data.reason ||
+        'Carta eliminata dal catalogo.'
+      );
+
+      resetCardForm();
+
+      await loadCardsCatalog();
+    }
+
+    async function loadCardsCatalog() {
+      const catalog =
+        document.getElementById('cardsCatalog');
+
+      const filter =
+        document.getElementById('cardFilter').value;
+
+      let query =
+        window.supabaseClient
+          .from('cards')
+          .select(`
+            id,
+            card_code,
+            status,
+            deleted_at,
+            current_version:card_versions!cards_current_version_fk (
+              id,
+              version_number,
+              name,
+              card_type,
+              mana_cost,
+              attack,
+              health,
+              sacrifice_requirement,
+              special_requirement,
+              rules_text,
+              effect_code,
+              effect_parameters,
+              timing,
+              tags,
+              rarity,
+              threat_rating,
+              image_path,
+              image_crop,
+              frame_style,
+              engine_supported,
+              ai_supported
+            )
+          `)
+          .is('deleted_at', null)
+          .order('created_at', {
+            ascending: false
+          });
+
+      if (filter === 'active') {
+        query = query.eq('status', 'active');
+      }
+
+      if (filter === 'inactive') {
+        query = query.eq('status', 'inactive');
+      }
+
+      const { data, error } =
+        await query;
+
+      if (error) {
+        catalog.innerHTML =
+          `<p class="muted">Errore: ${error.message}</p>`;
+
+        return;
+      }
+
+      cardsCache = data || [];
+
+      catalog.innerHTML = '';
+
+      for (const row of cardsCache) {
+        if (!row.current_version) {
+          continue;
+        }
+
+        const imageUrl =
+          await getSignedImageUrl(
+            row.current_version.image_path
+          );
+
+        row.current_version.signed_image_url =
+          imageUrl;
+
+        const cardData = {
+          ...row.current_version,
+          card_id: row.id,
+          card_code: row.card_code,
+          image_url: imageUrl
+        };
+
+        const wrapper =
+          document.createElement('article');
+
+        wrapper.className =
+          'card-admin-item';
+
+        wrapper.innerHTML =
+          window.PenombraCards.render(
+            cardData,
+            {
+              imageUrl,
+              interactive: false
+            }
+          ) +
+          `
+            <div class="card-admin-item__meta">
+              Stato: <strong>${row.status}</strong>
+              · Motore: ${
+                row.current_version.engine_supported
+                  ? '✅'
+                  : '❌'
+              }
+              · IA: ${
+                row.current_version.ai_supported
+                  ? '✅'
+                  : '❌'
+              }
+            </div>
+
+            <div class="card-admin-item__actions">
+              <button data-action="edit">
+                Modifica
+              </button>
+
+              <button data-action="duplicate">
+                Duplica
+              </button>
+
+              <button
+                class="${row.status === 'active' ? '' : 'green'}"
+                data-action="toggle"
+              >
+                ${
+                  row.status === 'active'
+                    ? 'Disattiva'
+                    : 'Attiva'
+                }
+              </button>
+
+              <button
+                class="danger"
+                data-action="delete"
+              >
+                Elimina
+              </button>
+            </div>
+          `;
+
+        wrapper
+          .querySelector('[data-action="edit"]')
+          .addEventListener('click', () => {
+            loadCardIntoEditor(row);
+          });
+
+        wrapper
+          .querySelector('[data-action="duplicate"]')
+          .addEventListener('click', () => {
+            duplicateCard(row.id);
+          });
+
+        wrapper
+          .querySelector('[data-action="toggle"]')
+          .addEventListener('click', () => {
+            setCardStatus(
+              row.id,
+              row.status === 'active'
+                ? 'inactive'
+                : 'active'
+            );
+          });
+
+        wrapper
+          .querySelector('[data-action="delete"]')
+          .addEventListener('click', () => {
+            deleteCard(row.id);
+          });
+
+        catalog.appendChild(wrapper);
+      }
+
+      if (!catalog.children.length) {
+        catalog.innerHTML =
+          '<p class="muted">Nessuna carta nel catalogo.</p>';
+      }
     }
 
     async function loadUsers() {
@@ -268,21 +1389,15 @@
           <td>${profile.username || '—'}</td>
           <td>${profile.display_name || '—'}</td>
           <td>${profile.role || 'player'}</td>
-          <td>${new Date(profile.created_at).toLocaleString('it-IT')}</td>
+          <td>
+            ${new Date(
+              profile.created_at
+            ).toLocaleString('it-IT')}
+          </td>
         `;
 
         body.appendChild(row);
       });
-
-      if (!data?.length) {
-        body.innerHTML = `
-          <tr>
-            <td colspan="4" class="muted">
-              Nessun utente trovato.
-            </td>
-          </tr>
-        `;
-      }
     }
 
     async function createUser() {
@@ -303,7 +1418,10 @@
 
       button.disabled = true;
 
-      showMessage('Creazione utente in corso…');
+      showMessage(
+        'createUserMessage',
+        'Creazione utente in corso…'
+      );
 
       try {
         const user =
@@ -315,6 +1433,7 @@
           });
 
         showMessage(
+          'createUserMessage',
           `Utente creato: ${user.username} (${user.role}).`
         );
 
@@ -326,7 +1445,9 @@
         await loadUsers();
       } catch (error) {
         showMessage(
-          error.message || 'Errore nella creazione dell’utente.',
+          'createUserMessage',
+          error.message ||
+          'Errore nella creazione dell’utente.',
           true
         );
       } finally {
@@ -340,15 +1461,18 @@
           await window.PenombraAuth.requireAdmin();
 
         document.getElementById('loadingPanel').hidden = true;
-
         document.getElementById('adminPanel').hidden = false;
 
-        await loadUsers();
+        resetCardForm();
+
+        await Promise.all([
+          loadUsers(),
+          loadCardsCatalog()
+        ]);
       } catch (error) {
         console.warn(error);
 
         document.getElementById('loadingPanel').hidden = true;
-
         document.getElementById('notAdminPanel').hidden = false;
       }
     }
@@ -361,6 +1485,49 @@
         await window.PenombraAuth.signOut();
         location.href = 'index.html';
       });
+
+    document.getElementById('newCardButton')
+      .addEventListener('click', resetCardForm);
+
+    document.getElementById('resetCardButton')
+      .addEventListener('click', resetCardForm);
+
+    document.getElementById('saveCardButton')
+      .addEventListener('click', saveCard);
+
+    document.getElementById('cardType')
+      .addEventListener('change', updateTypeVisibility);
+
+    document.getElementById('cardEffect')
+      .addEventListener('change', updateEffectHelp);
+
+    document.getElementById('cardImage')
+      .addEventListener('change', handleImagePreview);
+
+    [
+      'cardName',
+      'cardMana',
+      'cardRarity',
+      'cardAttack',
+      'cardHealth',
+      'cardSacrifices',
+      'cardRequirement',
+      'effectAmount',
+      'cardTiming',
+      'cardStatus',
+      'cardTags',
+      'cardRulesText',
+      'cardThreat'
+    ].forEach((id) => {
+      document.getElementById(id)
+        .addEventListener('input', updatePreview);
+
+      document.getElementById(id)
+        .addEventListener('change', updatePreview);
+    });
+
+    document.getElementById('cardFilter')
+      .addEventListener('change', loadCardsCatalog);
 
     window.addEventListener(
       'penombra:supabase-ready',

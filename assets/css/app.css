@@ -1,0 +1,349 @@
+:root {
+  --bg: #07111f;
+  --panel: #102038;
+  --panel-soft: #142842;
+  --line: #2a4764;
+  --text: #edf6ff;
+  --muted: #9bb1ca;
+  --gold: #fbbf24;
+  --blue: #60a5fa;
+  --red: #fb7185;
+  --green: #4ade80;
+  --violet: #b794f4;
+  --danger: #f87171;
+  --radius: 16px;
+  --card-ratio: 5 / 7;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  background:
+    radial-gradient(
+      circle at top,
+      #1c3b60 0%,
+      #0b1727 35%,
+      var(--bg) 78%
+    );
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+}
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(7, 17, 31, 0.92);
+  backdrop-filter: blur(10px);
+}
+
+.site-title {
+  margin: 0;
+  font-size: 20px;
+}
+
+.site-subtitle {
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.nav-link,
+.button {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 9px 12px;
+  text-decoration: none;
+  font-weight: 750;
+  color: #fff;
+  background: linear-gradient(135deg, #226aaf, #2563eb);
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.28);
+}
+
+.button--green {
+  background: linear-gradient(135deg, #16803b, #16a34a);
+}
+
+.button--secondary {
+  background: linear-gradient(135deg, #455a74, #334155);
+}
+
+.button--danger {
+  background: linear-gradient(135deg, #c42d2d, #991b1b);
+}
+
+.page {
+  width: min(1400px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 24px 0 48px;
+}
+
+.panel {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: linear-gradient(155deg, #14263d, #0d1828);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.25);
+}
+
+.panel h2,
+.panel h3 {
+  margin-top: 0;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 14px;
+}
+
+.penumombra-card {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  min-height: 0;
+  aspect-ratio: var(--card-ratio);
+  overflow: hidden;
+  border: 3px solid #40617e;
+  border-radius: 14px;
+  color: #fff;
+  background: linear-gradient(145deg, #213954, #0d1929);
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.38);
+  transition: transform 0.15s ease;
+}
+
+.penumombra-card.is-interactive:hover {
+  transform: translateY(-3px);
+  cursor: pointer;
+}
+
+.frame-monster {
+  border-color: #4f91dc;
+  background: linear-gradient(145deg, #214b78, #10233b);
+}
+
+.frame-extra {
+  border-color: #c49aff;
+  background: linear-gradient(145deg, #50347d, #1a1738);
+}
+
+.frame-sorcery {
+  border-color: #44d0b1;
+  background: linear-gradient(145deg, #1d625e, #102d32);
+}
+
+.frame-instant {
+  border-color: #ff826b;
+  background: linear-gradient(145deg, #7d302b, #351516);
+}
+
+.frame-structure {
+  border-color: #caa96c;
+}
+
+.frame-equipment {
+  border-color: #c3ccd8;
+}
+
+.frame-territory {
+  border-color: #78a46c;
+}
+
+.penumombra-card__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 10px 4px;
+}
+
+.penumombra-card__name {
+  font-size: 13px;
+  font-weight: 850;
+  line-height: 1.12;
+}
+
+.penumombra-card__mana {
+  min-width: 31px;
+  padding: 3px 5px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 11px;
+  color: #ffdf7c;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.penumombra-card__type {
+  padding: 0 10px 7px;
+  font-size: 9px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #d1e4ff;
+}
+
+.penumombra-card__art {
+  min-height: 0;
+  margin: 0 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 8px;
+  background: #07111f;
+}
+
+.penumombra-card__art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.penumombra-card__art-placeholder {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-height: 100px;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.6);
+  background:
+    radial-gradient(
+      circle at 25% 25%,
+      rgba(255, 255, 255, 0.18),
+      transparent 28%
+    ),
+    linear-gradient(135deg, #263e5a, #111c2e);
+  font-size: 30px;
+}
+
+.penumombra-card__art-placeholder span {
+  display: block;
+  margin-top: -32px;
+  font-size: 10px;
+}
+
+.penumombra-card__rules {
+  margin: 8px 9px;
+  padding: 7px;
+  overflow: auto;
+  border-radius: 8px;
+  color: #e4edf8;
+  background: rgba(0, 0, 0, 0.26);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.penumombra-card__footer {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 7px 10px 9px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.penumombra-card__footer--spell {
+  display: block;
+  text-align: center;
+}
+
+.penumombra-card__stat {
+  font-size: 14px;
+}
+
+.penumombra-card__stat:last-child {
+  text-align: right;
+}
+
+.penumombra-card__code {
+  font-size: 8px;
+  text-align: center;
+  color: #d1def0;
+}
+
+.auth-box {
+  display: grid;
+  max-width: 420px;
+  gap: 10px;
+}
+
+.field {
+  display: grid;
+  gap: 5px;
+}
+
+.field label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: var(--text);
+  background: #07111f;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 700px) {
+  .site-header {
+    position: static;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .page {
+    width: min(100% - 20px, 1400px);
+    padding-top: 14px;
+  }
+
+  .card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+}

@@ -306,9 +306,15 @@
             </p>
           </div>
 
-          <button id="newCardButton" class="button button--green">
-            + Nuova carta
-          </button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+  <button id="seedBaseSetButton" class="button button--secondary">
+    ⚡ Importa Set Base Attivo
+  </button>
+
+  <button id="newCardButton" class="button button--green">
+    + Nuova carta
+  </button>
+</div>
         </div>
 
         <div class="studio-layout" style="margin-top:16px">
@@ -1450,6 +1456,75 @@
         .addEventListener('change', updatePreview);
     });
 
+document.getElementById('seedBaseSetButton')
+  .addEventListener('click', async () => {
+    if (
+      !confirm(
+        'Importare il Set Base attivo? Le carte con lo stesso nome verranno ignorate.'
+      )
+    ) {
+      return;
+    }
+
+    const button =
+      document.getElementById('seedBaseSetButton');
+
+    button.disabled = true;
+
+    showMessage(
+      'cardStudioMessage',
+      'Importazione del Set Base in corso…'
+    );
+
+    try {
+      const { data, error } =
+        await window.supabaseClient.functions.invoke(
+          'admin-card-studio',
+          {
+            body: {
+              action: 'seed-base-set'
+            }
+          }
+        );
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (!data?.ok) {
+        throw new Error(
+          data?.error ||
+          'Errore nell’importazione del set.'
+        );
+      }
+
+      const imported =
+        data.imported?.length || 0;
+
+      const skipped =
+        data.skipped?.length || 0;
+
+      const errors =
+        data.errors?.length || 0;
+
+      showMessage(
+        'cardStudioMessage',
+        `Set Base completato: ${imported} carte importate, ${skipped} già presenti, ${errors} errori.`
+      );
+
+      await loadCardsCatalog();
+    } catch (error) {
+      showMessage(
+        'cardStudioMessage',
+        error.message ||
+        'Errore nell’importazione del Set Base.',
+        true
+      );
+    } finally {
+      button.disabled = false;
+    }
+  });
+    
     window.addEventListener(
       'penombra:supabase-ready',
       initializeAdmin

@@ -23,6 +23,7 @@
         .game-container {
             max-width: 900px;
             margin: 0 auto;
+            padding-bottom: 60px;
         }
         
         .header {
@@ -345,13 +346,23 @@
             transform: none;
         }
         
-        .end-turn-btn {
+        .action-buttons {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            padding: 12px 24px;
-            font-size: 1em;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
             z-index: 50;
+        }
+        
+        .action-buttons button {
+            padding: 12px 20px;
+            font-size: 0.9em;
+        }
+        
+        .save-btn {
+            background: linear-gradient(145deg, #4ecdc4 0%, #44a08d 100%) !important;
         }
     </style>
 </head>
@@ -431,13 +442,17 @@
         </div>
     </div>
     
-    <!-- End Turn Button -->
-    <button class="end-turn-btn" onclick="game.endTurn()">Fine Turno</button>
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <button class="save-btn" onclick="game.saveGame()">💾 Salva Partita</button>
+        <button onclick="game.endTurn()">Fine Turno</button>
+    </div>
     
     <script>
         const game = {
             turn: 1,
             phase: 'start',
+            moveHistory: [],
             player: {
                 hp: 20,
                 mana: 1,
@@ -459,6 +474,7 @@
             selectedHandCard: null,
             selectedExtraCard: null,
             targetingMode: null,
+            sourceCell: null,
             
             init() {
                 this.log('=== Inizio Partita ===');
@@ -540,24 +556,38 @@
                         if (this.player.deck.length === 0) {
                             this.log('⚠️ Mazzo vuoto! Esaurimento: 2 danni');
                             this.player.hp -= 2;
+                            this.recordMove('exhaustion', { player: 'player', damage: 2 });
                             this.checkWinCondition();
                             return;
                         }
                         const card = this.player.deck.pop();
                         this.player.hand.push(card);
                         this.log(`📥 Peschi: ${card.name}`);
+                        this.recordMove('draw', { player: 'player', card: card.name });
                     } else {
                         if (this.ia.deck.length === 0) {
                             this.log('⚠️ Mazzo IA vuoto!');
                             this.ia.hp -= 2;
+                            this.recordMove('exhaustion', { player: 'ia', damage: 2 });
                             this.checkWinCondition();
                             return;
                         }
                         const card = this.ia.deck.pop();
                         this.ia.hand.push(card);
+                        this.recordMove('draw', { player: 'ia', card: card.name });
                     }
                 }
                 this.updateUI();
+            },
+            
+            recordMove(type, data) {
+                this.moveHistory.push({
+                    turn: this.turn,
+                    phase: this.phase,
+                    type: type,
+                    data: data,
+                    timestamp: Date.now()
+                });
             },
             
             startTurn() {
@@ -566,6 +596,12 @@
                 this.player.mana = this.player.maxMana;
                 this.log(`=== Turno ${this.turn} ===`);
                 this.log(`💎 Mana: ${this.player.mana}`);
+                this.recordMove('turn_start', { 
+                    turn: this.turn, 
+                    mana: this.player.mana,
+                    playerHP: this.player.hp,
+                    iaHP: this.ia.hp
+                });
                 
                 this.board.forEach(cell => {
                     if (cell.owner === 'player' && cell.card) {
@@ -590,6 +626,7 @@
                 
                 if (card.type === 'instant') {
                     this.log(`⚡ Giochi istantaneo: ${card.name}`);
+                    this.recordMove('play_instant', { card: card.name, effect: card.effect, amount: card.amount });
                     this.resolveInstant(card);
                     this.player.hand.splice(handIndex, 1);
                     this.player.graveyard.push(card);
@@ -621,6 +658,13 @@
                 targetCell.owner = 'player';
                 
                 this.log(`🎴 Giochi: ${card.name} (${card.cost} mana)`);
+                this.recordMove('play_monster', { 
+                    card: card.name, 
+                    cost: card.cost,
+                    position: `R${targetCell.row}C${targetCell.col}`,
+                    forza: card.forza,
+                    resistenza: card.resistenza
+                });
                 
                 if (card.etb) {
                     this.log(`⚡ Effetto ETB: ${card.etb}`);
@@ -704,6 +748,12 @@
                 
                 this.player.mana -= 1;
                 this.log(`🚶 Muove ${targetCell.card.name} in R${targetCell.row}C${targetCell.col}`);
+                this.recordMove('move', {
+                    card: targetCell.card.name,
+                    from: `R${sourceCell.row}C${sourceCell.col}`,
+                    to: `R${targetCell.row}C${targetCell.col}`,
+                    manaCost: 1
+                });
                 
                 this.targetingMode = null;
                 this.sourceCell = null;
@@ -725,9 +775,20 @@
                     this.sourceCell = cellIndex;
                     this.highlightCells([target.index]);
                     this.log(`⚔️ ${cell.card.name} attacca ${this.board[target.index].card.name}`);
+                    this.recordMove('attack_declare', {
+                        attacker: cell.card.name,
+                        attackerPos: `R${cell.row}C${cell.col}`,
+                        target: this.board[target.index].card.name,
+                        targetPos: `R${this.board[target.index].row}C${this.board[target.index].col}`
+                    });
                     this.resolveCombat(cellIndex, target.index);
                 } else if (target.type === 'direct') {
                     this.log(`⚔️ ${cell.card.name} attacca direttamente!`);
+                    this.recordMove('attack_direct', {
+                        attacker: cell.card.name,
+                        attackerPos: `R${cell.row}C${cell.col}`,
+                        damage: cell.card.forza
+                    });
                     this.ia.hp -= cell.card.forza;
                     cell.card.tired = true;
                     this.updateUI();
@@ -770,11 +831,24 @@
                 
                 this.log(`💥 ${attacker.name} (${attacker.forza}) vs ${defender.name} (${defender.resistenza})`);
                 
+                const damageDealt = attacker.forza;
                 defender.resistenza -= attacker.forza;
                 attackerCell.card.tired = true;
                 
+                this.recordMove('attack_resolve', {
+                    attacker: attacker.name,
+                    defender: defender.name,
+                    damage: damageDealt,
+                    defenderRemainingHP: defender.resistenza
+                });
+                
                 if (defender.resistenza <= 0) {
                     this.log(`💀 ${defender.name} distrutto`);
+                    this.recordMove('creature_death', {
+                        creature: defender.name,
+                        owner: defenderCell.owner,
+                        position: `R${defenderCell.row}C${defenderCell.col}`
+                    });
                     defenderCell.card = null;
                     defenderCell.owner = null;
                 }
@@ -808,6 +882,8 @@
                     return;
                 }
                 
+                const sacrificedCards = sacrifices.map(s => s.card.name);
+                
                 this.player.mana -= card.cost;
                 this.player.extraDeck.splice(extraIndex, 1);
                 
@@ -821,6 +897,12 @@
                 targetCell.owner = 'player';
                 
                 this.log(`🎴 Evoci ${card.name} (sacrifici: 2)`);
+                this.recordMove('summon_extra', {
+                    card: card.name,
+                    cost: card.cost,
+                    sacrifices: sacrificedCards,
+                    position: `R${targetCell.row}C${targetCell.col}`
+                });
                 
                 if (card.etb) {
                     this.log(`⚡ Effetto ETB: ${card.etb}`);
@@ -837,11 +919,16 @@
                 }
                 
                 this.log('🌙 Fine turno');
+                this.recordMove('end_turn', {
+                    finalMana: this.player.mana,
+                    handSize: this.player.hand.length
+                });
                 
                 while (this.player.hand.length > 7) {
                     const card = this.player.hand.pop();
                     this.player.graveyard.push(card);
                     this.log(`🗑️ Scarto: ${card.name}`);
+                    this.recordMove('discard', { card: card.name, reason: 'hand_limit' });
                 }
                 
                 this.turn++;
@@ -850,14 +937,64 @@
             
             checkWinCondition() {
                 if (this.ia.hp <= 0) {
+                    this.recordMove('game_end', { winner: 'player', iaHP: 0 });
                     this.showModal('🏆 Vittoria!', 'Hai sconfitto l\'IA!', [
                         { text: 'Nuova Partita', action: () => location.reload() }
                     ]);
                 } else if (this.player.hp <= 0) {
+                    this.recordMove('game_end', { winner: 'ia', playerHP: 0 });
                     this.showModal('💀 Sconfitta', 'Sei stato sconfitto!', [
                         { text: 'Nuova Partita', action: () => location.reload() }
                     ]);
                 }
+            },
+            
+            saveGame() {
+                const saveData = {
+                    version: '1.0',
+                    timestamp: new Date().toISOString(),
+                    turn: this.turn,
+                    phase: this.phase,
+                    player: {
+                        hp: this.player.hp,
+                        mana: this.player.mana,
+                        maxMana: this.player.maxMana,
+                        hand: this.player.hand.map(c => ({ name: c.name, cost: c.cost, forza: c.forza, resistenza: c.resistenza, type: c.type })),
+                        deckCount: this.player.deck.length,
+                        graveyardCount: this.player.graveyard.length,
+                        extraDeckCount: this.player.extraDeck.length
+                    },
+                    ia: {
+                        hp: this.ia.hp,
+                        handCount: this.ia.hand.length,
+                        deckCount: this.ia.deck.length,
+                        graveyardCount: this.ia.graveyard.length,
+                        extraDeckCount: this.ia.extraDeck.length
+                    },
+                    board: this.board.map(cell => ({
+                        row: cell.row,
+                        col: cell.col,
+                        owner: cell.owner,
+                        card: cell.card ? { name: cell.card.name, forza: cell.card.forza, resistenza: cell.card.resistenza, tired: cell.card.tired } : null
+                    })),
+                    moveHistory: this.moveHistory
+                };
+                
+                const blob = new Blob([JSON.stringify(saveData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `penombra_partita_turno${this.turn}_${Date.now()}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                this.log('💾 Partita salvata!');
+                this.showModal('Partita Salvata', 
+                    `File JSON scaricato con ${this.moveHistory.length} mosse registrate. Caricalo qui per l'analisi.`,
+                    [{ text: 'OK', action: () => this.hideModal() }]
+                );
             },
             
             updateUI() {
@@ -1036,6 +1173,17 @@
                 });
                 
                 document.getElementById('modal').style.display = 'flex';
+            },
+            
+            hideModal() {
+                document.getElementById('modal').style.display = 'none';
+            },
+            
+            highlightCells(indices) {
+                indices.forEach(index => {
+                    const cell = document.getElementById('board').children[index];
+                    if (cell) cell.classList.add('highlight');
+                });
             }
         };
         

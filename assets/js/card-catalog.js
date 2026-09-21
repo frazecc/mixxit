@@ -82,16 +82,11 @@
 
   function validInitialPool(cards) {
     const total = manaTotal(cards);
-    return cards.length === RULES.initialPool &&
-      total >= RULES.minInitialMana &&
-      total <= RULES.maxInitialMana &&
-      typeCount(cards) >= RULES.minInitialTypes;
+    return cards.length === RULES.initialPool && total >= RULES.minInitialMana && total <= RULES.maxInitialMana && typeCount(cards) >= RULES.minInitialTypes;
   }
 
   function chooseInitialPool(cards) {
-    if (cards.length < RULES.initialPool) {
-      throw new Error(`Servono almeno ${RULES.initialPool} carte normali attive.`);
-    }
+    if (cards.length < RULES.initialPool) throw new Error(`Servono almeno ${RULES.initialPool} carte normali attive.`);
     for (let attempt = 0; attempt < 5000; attempt += 1) {
       const candidate = shuffle(cards).slice(0, RULES.initialPool);
       if (validInitialPool(candidate)) return candidate;
@@ -99,17 +94,15 @@
     throw new Error('Non riesco a generare un mazzo iniziale valido con le carte attive disponibili.');
   }
 
-  function chooseSidePool(cards) {
-    if (cards.length < RULES.sidePool) {
-      throw new Error(`Servono almeno ${RULES.sidePool} carte normali attive per il Side Deck iniziale.`);
-    }
-    return shuffle(cards).slice(0, RULES.sidePool);
+  function chooseSidePool(cards, excludedIds = []) {
+    const excluded = new Set(excludedIds);
+    const available = cards.filter(card => !excluded.has(card.id));
+    if (available.length < RULES.sidePool) throw new Error(`Servono almeno ${RULES.sidePool} carte normali attive per il Side Deck iniziale.`);
+    return shuffle(available).slice(0, RULES.sidePool);
   }
 
   function chooseExtraPool(cards) {
-    if (cards.length < RULES.extraPool) {
-      throw new Error(`Servono almeno ${RULES.extraPool} Mostrissimi attivi.`);
-    }
+    if (cards.length < RULES.extraPool) throw new Error(`Servono almeno ${RULES.extraPool} Mostrissimi attivi.`);
     return shuffle(cards).slice(0, RULES.extraPool);
   }
 
@@ -119,59 +112,15 @@
   }
 
   async function loadActiveCards(supabaseClient) {
+    if (!supabaseClient) throw new Error('Client Supabase non disponibile.');
     const { data, error } = await supabaseClient
       .from('cards')
-      .select(`
-        id,
-        card_code,
-        status,
-        deleted_at,
-        current_version:card_versions!cards_current_version_fk (
-          id,
-          version_number,
-          name,
-          card_type,
-          mana_cost,
-          attack,
-          health,
-          sacrifice_requirement,
-          special_requirement,
-          rules_text,
-          effect_code,
-          effect_parameters,
-          timing,
-          tags,
-          rarity,
-          threat_rating,
-          image_path,
-          image_crop,
-          frame_style,
-          engine_supported,
-          ai_supported
-        )
-      `)
+      .select(`id, card_code, status, deleted_at, current_version:card_versions!cards_current_version_fk (id, version_number, name, card_type, mana_cost, attack, health, sacrifice_requirement, special_requirement, rules_text, effect_code, effect_parameters, timing, tags, rarity, threat_rating, image_path, image_crop, frame_style, engine_supported, ai_supported)`)
       .eq('status', 'active')
       .is('deleted_at', null);
     if (error) throw error;
-    return (data || [])
-      .filter(row => row.current_version)
-      .map(row => normalizeCard({ ...row.current_version, id: row.current_version.id, card_id: row.id, card_code: row.card_code }));
+    return (data || []).filter(row => row.current_version).map(row => normalizeCard({ ...row.current_version, id: row.current_version.id, card_id: row.id, card_code: row.card_code }));
   }
 
-  window.MixxitCardCatalog = {
-    RULES,
-    TYPE_LABELS,
-    shuffle,
-    normalizeCard,
-    normalCards,
-    extraCards,
-    manaTotal,
-    typeCount,
-    validInitialPool,
-    chooseInitialPool,
-    chooseSidePool,
-    chooseExtraPool,
-    draftOptions,
-    loadActiveCards
-  };
+  window.MixxitCardCatalog = { RULES, TYPE_LABELS, shuffle, normalizeCard, normalCards, extraCards, manaTotal, typeCount, validInitialPool, chooseInitialPool, chooseSidePool, chooseExtraPool, draftOptions, loadActiveCards };
 })();

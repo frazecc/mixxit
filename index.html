@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>La Partita della Penombra</title>
+
+  <link rel="stylesheet" href="assets/css/app.css">
+</head>
+
+<body>
+  <header class="site-header">
+    <div>
+      <h1 class="site-title">⚔️ La Partita della Penombra</h1>
+
+      <div class="site-subtitle">
+        Sconfiggi l’IA nella bruma. Costruisci il tuo mazzo. Sopravvivi alla penombra.
+      </div>
+    </div>
+
+    <nav class="site-nav">
+      <a class="nav-link button--secondary" href="deckbuilder.html">
+        Costruisci il mazzo
+      </a>
+
+      <a class="nav-link button--secondary" href="replay.html">
+        I miei replay
+      </a>
+
+      <a class="nav-link button--secondary" href="admin.html">
+        Admin
+      </a>
+    </nav>
+  </header>
+
+  <main class="page">
+    <section class="panel">
+      <h2>Una partita nella penombra</h2>
+
+      <p class="muted">
+        Il tuo obiettivo è ridurre i punti vita dell’IA a zero.
+        Prima della partita costruisci un mazzo, guarda la carta firma
+        dell’avversario e modifica fino a tre carte tramite il Side Deck.
+      </p>
+
+      <div id="authStatus" class="muted">
+        Connessione a Supabase in corso…
+      </div>
+
+      <div id="guestActions" class="auth-box" hidden>
+        <h3>Accedi per giocare</h3>
+
+        <div class="field">
+          <label for="loginEmail">Email</label>
+          <input
+            id="loginEmail"
+            type="email"
+            placeholder="tu@email.it"
+          >
+        </div>
+
+        <div class="field">
+          <label for="loginPassword">Password</label>
+          <input
+            id="loginPassword"
+            type="password"
+            placeholder="Password"
+          >
+        </div>
+
+        <button id="loginButton" class="button">
+          Accedi
+        </button>
+
+        <button id="signupButton" class="button button--secondary">
+          Crea account
+        </button>
+
+        <div id="authMessage" class="muted"></div>
+      </div>
+
+      <div id="playerActions" hidden>
+        <h3 id="welcomeTitle">Benvenuto nella Penombra</h3>
+
+        <p class="muted">
+          Il Deckbuilder sarà il punto di ingresso alla partita PvE.
+        </p>
+
+        <a class="button button--green" href="deckbuilder.html">
+          Apri Deckbuilder
+        </a>
+
+        <button id="logoutButton" class="button button--secondary">
+          Esci
+        </button>
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top:16px">
+      <h2>Carte del set attivo</h2>
+
+      <p class="muted">
+        Questa sezione mostrerà le carte attive pubblicate dall’Admin.
+      </p>
+
+      <div id="publicCards" class="card-grid"></div>
+    </section>
+  </main>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/supabase-client.js"></script>
+  <script src="assets/js/card-renderer.js"></script>
+
+  <script>
+    async function initializeHome() {
+      const client = window.supabaseClient;
+
+      if (!client) {
+        document.getElementById('authStatus').textContent =
+          'Impossibile inizializzare Supabase.';
+        return;
+      }
+
+      const { data: sessionData } =
+        await client.auth.getSession();
+
+      const session = sessionData.session;
+
+      document.getElementById('authStatus').hidden = true;
+
+      if (session) {
+        document.getElementById('playerActions').hidden = false;
+
+        document.getElementById('welcomeTitle').textContent =
+          `Benvenuto, ${session.user.email}`;
+      } else {
+        document.getElementById('guestActions').hidden = false;
+      }
+
+      const { data: cards, error } = await client
+        .from('cards')
+        .select(`
+          id,
+          card_code,
+          status,
+          current_version:card_versions!cards_current_version_fk (
+            id,
+            version_number,
+            name,
+            card_type,
+            mana_cost,
+            attack,
+            health,
+            rules_text,
+            rarity,
+            image_path
+          )
+        `)
+        .eq('status', 'active')
+        .is('deleted_at', null)
+        .limit(12);
+
+      if (error) {
+        console.warn(error);
+
+        document.getElementById('publicCards').innerHTML =
+          '<p class="muted">Nessuna carta attiva pubblicata al momento.</p>';
+
+        return;
+      }
+
+      const grid = document.getElementById('publicCards');
+
+      grid.innerHTML = '';
+
+      (cards || []).forEach((row) => {
+        if (!row.current_version) {
+          return;
+        }
+
+        const card = {
+          ...row.current_version,
+          card_id: row.id,
+          card_code: row.card_code
+        };
+
+        grid.insertAdjacentHTML(
+          'beforeend',
+          window.PenombraCards.render(card)
+        );
+      });
+
+      if (!grid.children.length) {
+        grid.innerHTML =
+          '<p class="muted">Il set non contiene ancora carte attive.</p>';
+      }
+    }
+
+    document.getElementById('loginButton')
+      .addEventListener('click', async () => {
+        const email =
+          document.getElementById('loginEmail').value.trim();
+
+        const password =
+          document.getElementById('loginPassword').value;
+
+        const message =
+          document.getElementById('authMessage');
+
+        const { error } =
+          await window.supabaseClient.auth.signInWithPassword({
+            email,
+            password
+          });
+
+        message.textContent = error
+          ? error.message
+          : 'Accesso riuscito. Ricarico…';
+
+        if (!error) {
+          location.reload();
+        }
+      });
+
+    document.getElementById('signupButton')
+      .addEventListener('click', async () => {
+        const email =
+          document.getElementById('loginEmail').value.trim();
+
+        const password =
+          document.getElementById('loginPassword').value;
+
+        const message =
+          document.getElementById('authMessage');
+
+        const { error } =
+          await window.supabaseClient.auth.signUp({
+            email,
+            password,
+            options: {
+              data: {
+                display_name: email.split('@')[0]
+              }
+            }
+          });
+
+        message.textContent = error
+          ? error.message
+          : 'Account creato. Controlla l’email se la conferma è attiva.';
+      });
+
+    document.getElementById('logoutButton')
+      .addEventListener('click', async () => {
+        await window.supabaseClient.auth.signOut();
+        location.reload();
+      });
+
+    window.addEventListener(
+      'penombra:supabase-ready',
+      initializeHome
+    );
+  </script>
+</body>
+</html>
